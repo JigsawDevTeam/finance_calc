@@ -1,0 +1,501 @@
+{
+    "financeStatementTable": [
+        {
+            "id": 1,
+            "name": "Sales",
+            "order": 1,
+            "isExpandable": 1,
+            "isBold": 1,
+            "isTitle": 0,
+            "parentId": null,
+            "isLambdaLogic": 0
+        },
+        {
+            "id": 2,
+            "name": "Returns",
+            "order": 2,
+            "isExpandable": 0,
+            "isBold": 0,
+            "isTitle": 0,
+            "parentId": null,
+            "isLambdaLogic": 0
+        },
+        {
+            "id": 3,
+            "name": "GST",
+            "order": 3,
+            "isExpandable": 0,
+            "isBold": 0,
+            "isTitle": 0,
+            "parentId": null,
+            "isLambdaLogic": 0
+        },
+        {
+            "id": 4,
+            "name": "Other Income",
+            "order": 4,
+            "isExpandable": 1,
+            "isBold": 0,
+            "isTitle": 0,
+            "parentId": null,
+            "isLambdaLogic": 0
+        },
+        {
+            "id": 5,
+            "name": "Net Sales",
+            "order": 5,
+            "isExpandable": 0,
+            "isBold": 1,
+            "isTitle": 0,
+            "parentId": null,
+            "isLambdaLogic": 1
+        },
+        {
+            "id": 6,
+            "name": "% Growth",
+            "order": 7,
+            "isExpandable": 0,
+            "isBold": 1,
+            "isTitle": 0,
+            "parentId": null,
+            "isLambdaLogic": 1
+        },
+        {
+            "id": 7,
+            "name": "Cost of Goods Sold",
+            "order": 8,
+            "isExpandable": 0,
+            "isBold": 0,
+            "isTitle": 0,
+            "parentId": null,
+            "isLambdaLogic": 0
+        },
+        {
+            "id": 8,
+            "name": "Gross Profit",
+            "order": 9,
+            "isExpandable": 0,
+            "isBold": 1,
+            "isTitle": 0,
+            "parentId": null,
+            "isLambdaLogic": 1
+        },
+        {
+            "id": 9,
+            "name": "Gross Profit %",
+            "order": 10,
+            "isExpandable": 0,
+            "isBold": 1,
+            "isTitle": 0,
+            "parentId": null,
+            "isLambdaLogic": 1
+        },
+        {
+            "id": 11,
+            "name": "Shipping Cost",
+            "order": 12,
+            "isExpandable": 0,
+            "isBold": 0,
+            "isTitle": 0,
+            "parentId": 10,
+            "isLambdaLogic": 0
+        },
+        {
+            "id": 12,
+            "name": "Packaging",
+            "order": 13,
+            "isExpandable": 0,
+            "isBold": 0,
+            "isTitle": 0,
+            "parentId": 10,
+            "isLambdaLogic": 0
+        },
+        {
+            "id": 13,
+            "name": "CM1",
+            "order": 14,
+            "isExpandable": 0,
+            "isBold": 0,
+            "isTitle": 0,
+            "parentId": 10,
+            "isLambdaLogic": 1
+        },
+        {
+            "id": 14,
+            "name": "Ad Spend",
+            "order": 16,
+            "isExpandable": 1,
+            "isBold": 0,
+            "isTitle": 0,
+            "parentId": 19,
+            "isLambdaLogic": 0
+        },
+        {
+            "id": 15,
+            "name": "Platform Comission",
+            "order": 17,
+            "isExpandable": 0,
+            "isBold": 0,
+            "isTitle": 0,
+            "parentId": 19,
+            "isLambdaLogic": 0
+        },
+        {
+            "id": 20,
+            "name": "Additional Costs",
+            "order": 18,
+            "isExpandable": 0,
+            "isBold": 0,
+            "isTitle": 0,
+            "parentId": 19,
+            "isLambdaLogic": 0
+        },
+        {
+            "id": 18,
+            "name": "CM2",
+            "order": 19,
+            "isExpandable": 0,
+            "isBold": 1,
+            "isTitle": 0,
+            "parentId": 19,
+            "isLambdaLogic": 1
+        }
+    ],
+    "metricMappingData": [
+        {
+            "fsId": 1,
+            "fsName": "Sales",
+            "fsmId": 1,
+            "fsmName": "D2C",
+            "formula": "",
+            "isLambdaLogic": 0,
+            "type": "income"
+        },
+        {
+            "fsId": 1,
+            "fsName": "Sales",
+            "fsmId": 2,
+            "fsmName": "Amazon Seller",
+            "formula": "",
+            "isLambdaLogic": 0,
+            "type": "income"
+        },
+        {
+            "fsId": 1,
+            "fsName": "Sales",
+            "fsmId": 4,
+            "fsmName": "Offline",
+            "formula": "",
+            "isLambdaLogic": 0,
+            "type": "income"
+        },
+        {
+            "fsId": 4,
+            "fsName": "Other Income",
+            "fsmId": 5,
+            "fsmName": "Shipping",
+            "formula": "16+17",
+            "isLambdaLogic": 0,
+            "type": "income"
+        },
+        {
+            "fsId": 4,
+            "fsName": "Other Income",
+            "fsmId": 6,
+            "fsmName": "COD",
+            "formula": "",
+            "isLambdaLogic": 0,
+            "type": "income"
+        },
+        {
+            "fsId": 14,
+            "fsName": "Ad Spend",
+            "fsmId": 8,
+            "fsmName": "Meta Ads",
+            "formula": "",
+            "isLambdaLogic": 0,
+            "type": "expense"
+        },
+        {
+            "fsId": 14,
+            "fsName": "Ad Spend",
+            "fsmId": 9,
+            "fsmName": "Google Ads",
+            "formula": "",
+            "isLambdaLogic": 0,
+            "type": "expense"
+        },
+        {
+            "fsId": 14,
+            "fsName": "Ad Spend",
+            "fsmId": 10,
+            "fsmName": "Amazon Ads",
+            "formula": "",
+            "isLambdaLogic": 0,
+            "type": "expense"
+        },
+        {
+            "fsId": 14,
+            "fsName": "Ad Spend",
+            "fsmId": 11,
+            "fsmName": "Others",
+            "formula": "",
+            "isLambdaLogic": 0,
+            "type": "expense"
+        },
+        {
+            "fsId": 2,
+            "fsName": "Returns",
+            "fsmId": 15,
+            "fsmName": "Shopify [Returns]",
+            "formula": "",
+            "isLambdaLogic": 0,
+            "type": "expense"
+        },
+        {
+            "fsId": 2,
+            "fsName": "Returns",
+            "fsmId": 16,
+            "fsmName": "Amazon Seller [Returns]",
+            "formula": "",
+            "isLambdaLogic": 0,
+            "type": "expense"
+        },
+        {
+            "fsId": null,
+            "fsName": null,
+            "fsmId": 17,
+            "fsmName": "Shopify Shipping",
+            "formula": "",
+            "isLambdaLogic": null,
+            "type": null
+        },
+        {
+            "fsId": null,
+            "fsName": null,
+            "fsmId": 18,
+            "fsmName": "Amazon Seller Shipping",
+            "formula": "",
+            "isLambdaLogic": null,
+            "type": null
+        },
+        {
+            "fsId": 20,
+            "fsName": "Additional Costs",
+            "fsmId": 21,
+            "fsmName": "Agency Fees",
+            "formula": "",
+            "isLambdaLogic": 0,
+            "type": "expense"
+        },
+        {
+            "fsId": 20,
+            "fsName": "Additional Costs",
+            "fsmId": 22,
+            "fsmName": "Branding",
+            "formula": "",
+            "isLambdaLogic": 0,
+            "type": "expense"
+        },
+        {
+            "fsId": 3,
+            "fsName": "GST",
+            "fsmId": 23,
+            "fsmName": "Shopify [Taxes]",
+            "formula": "",
+            "isLambdaLogic": 0,
+            "type": "income"
+        },
+        {
+            "fsId": 3,
+            "fsName": "GST",
+            "fsmId": 24,
+            "fsmName": "Amazon Seller [Taxes]",
+            "formula": "",
+            "isLambdaLogic": 0,
+            "type": "income"
+        },
+        {
+            "fsId": 11,
+            "fsName": "Shipping Cost",
+            "fsmId": 25,
+            "fsmName": "Shopify [Shipping Cost]",
+            "formula": "",
+            "isLambdaLogic": 0,
+            "type": "expense"
+        },
+        {
+            "fsId": 11,
+            "fsName": "Shipping Cost",
+            "fsmId": 26,
+            "fsmName": "Amazon [Shipping Cost]",
+            "formula": "",
+            "isLambdaLogic": 0,
+            "type": "expense"
+        },
+        {
+            "fsId": 12,
+            "fsName": "Packaging",
+            "fsmId": 27,
+            "fsmName": "Shopify [Packaging Cost]",
+            "formula": "",
+            "isLambdaLogic": 0,
+            "type": "expense"
+        },
+        {
+            "fsId": 12,
+            "fsName": "Packaging",
+            "fsmId": 28,
+            "fsmName": "Amazon Seller [Packaging Cost]",
+            "formula": "",
+            "isLambdaLogic": 0,
+            "type": "expense"
+        },
+        {
+            "fsId": 15,
+            "fsName": "Platform Comission",
+            "fsmId": 29,
+            "fsmName": "Shopify [Platform Commision]",
+            "formula": "",
+            "isLambdaLogic": 0,
+            "type": "expense"
+        },
+        {
+            "fsId": 15,
+            "fsName": "Platform Comission",
+            "fsmId": 30,
+            "fsmName": "Amazon Seller [Platform Commission]",
+            "formula": "",
+            "isLambdaLogic": 0,
+            "type": "expense"
+        }
+    ],
+    "inputDataMapping": {
+        "01-2024": {
+            "1": 100000,
+            "2": 200000,
+            "4": 19900,
+            "8": 20000,
+            "9": 0,
+            "unit": "₹"
+        },
+        "12-2023": {
+            "1": 90000,
+            "2": 190000,
+            "4": 12000,
+            "8": 22000,
+            "9": 2000,
+            "unit": "₹"
+        },
+        "11-2023": {
+            "1": 80000,
+            "2": 180000,
+            "4": 15000,
+            "8": 25000,
+            "9": 5000,
+            "unit": "₹"
+        },
+        "10-2023": {
+            "1": 95000,
+            "2": 195000,
+            "4": 17000,
+            "8": 27000,
+            "9": 7000,
+            "unit": "₹"
+        },
+        "09-2023": {
+            "1": 70000,
+            "2": 170000,
+            "4": 18000,
+            "8": 28000,
+            "9": 8000,
+            "unit": "₹"
+        },
+        "08-2023": {
+            "1": 75000,
+            "2": 175000,
+            "4": 14000,
+            "8": 24000,
+            "9": 4000,
+            "unit": "₹"
+        },
+        "07-2023": {
+            "1": 70000,
+            "2": 170000,
+            "4": 19000,
+            "8": 29000,
+            "9": 9000,
+            "unit": "₹"
+        },
+        "06-2023": {
+            "1": 670000,
+            "2": 1670000,
+            "4": 11000,
+            "8": 21000,
+            "9": 1000,
+            "unit": "₹"
+        },
+        "05-2023": {
+            "1": 75000,
+            "2": 175000,
+            "4": 16000,
+            "8": 26000,
+            "9": 6000,
+            "unit": "₹"
+        },
+        "04-2023": {
+            "1": 57000,
+            "2": 157000,
+            "4": 13000,
+            "8": 23000,
+            "9": 3000,
+            "unit": "₹"
+        },
+        "03-2023": {
+            "1": 64000,
+            "2": 164000,
+            "4": 20000,
+            "8": 23000,
+            "9": 3000,
+            "unit": "₹"
+        },
+        "02-2023": {
+            "1": 50000,
+            "2": 150000,
+            "4": 15000,
+            "8": 25000,
+            "9": 5000,
+            "unit": "₹"
+        }
+    },
+    "companyId": "137",
+    "last12CYMonthsArr": [
+        "12-2023",
+        "11-2023",
+        "10-2023",
+        "09-2023",
+        "08-2023",
+        "07-2023",
+        "06-2023",
+        "05-2023",
+        "04-2023",
+        "03-2023",
+        "02-2023",
+        "01-2023"
+    ],
+    "cogsCalcRequired": false,
+    "cogsFinanceMapping": {
+        "01-2023": 20000,
+        "02-2023": 30000,
+        "03-2023": 26000,
+        "04-2023": 26000,
+        "05-2023": 32000,
+        "06-2023": 22000,
+        "07-2023": 38000,
+        "08-2023": 28000,
+        "09-2023": 36000,
+        "10-2023": 34000,
+        "11-2023": 30000,
+        "12-2023": 24000
+    }
+}
