@@ -17,9 +17,6 @@ jobs:
         with:
           python-version: "3.9" # Set to your Python version
 
-      - name: Install dependencies
-        run: npm install
-
       - name: Check AWS SAM CLI version
         run: |
           if ! sam --version; then
