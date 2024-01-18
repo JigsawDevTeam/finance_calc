@@ -15,7 +15,7 @@ Parameters:
     Description: Slack token for error notifications
 
 Resources:
-  ImageGeneration:
+  FinanceCalc:
     Type: AWS::Serverless::Function
     Properties:
       CodeUri: finance_calc/
