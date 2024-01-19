@@ -25,6 +25,6 @@ Resources:
         - x86_64
       Environment:
         Variables:
-          ENVIRONMENT: !Ref ENVIORMENT
+          ENVIRONMENT: !Ref ENVIRONMENT
           SLACKERRORTOKEN: !Ref SLACKERRORTOKEN
       # Adjust as necessary

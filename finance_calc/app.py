@@ -6,12 +6,12 @@ import requests
 
 def lambda_handler(event, context):
     environment = os.environ.get('ENVIRONMENT')
-    api_link = os.environ.get('JIGSAWAPILINK')
     print('ENVIROMENT', environment)
     data = event
     
     # INPUT DATA RECALCULATION
     metric_mapping_data = data['metricMappingData']
+    api_link = data['apiLink']
     last12CYMonthsArr = data['last12CYMonthsArr']
     cogs_finance_mapping = data['cogsFinanceMapping']
     input_data_mapping = data['inputDataMapping']
