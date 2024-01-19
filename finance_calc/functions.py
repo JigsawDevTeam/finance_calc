@@ -37,11 +37,10 @@ def input_data_recalc(required_calc_metrics, last12CYMonthsArr, input_data_mappi
         dummy = {
             'metricId': 0,
             'companyId': company_id,
-            'updatedCost': 0,
             'apiCost': 0,
             'unit': unit,
             'monthYear': '',
-            'inEffectValue': 'apiCost'
+            'inEffectValue': 'api_cost'
         }
         for i in required_calc_metrics:
             formula_string = i['formula']

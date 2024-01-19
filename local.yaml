@@ -1,30 +1,32 @@
-AWSTemplateFormatVersion: "2010-09-09"
+AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
 Globals:
   Function:
     MemorySize: 2048
     Timeout: 320
-
 Parameters:
   ENVIRONMENT:
     Type: String
     Description: Deployment environment
-
   SLACKERRORTOKEN:
     Type: String
     Description: Slack token for error notifications
-
 Resources:
   FinanceCalc:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: finance_calc/
+      CodeUri: FinanceCalc
       Handler: app.lambda_handler
       Runtime: python3.9
       Architectures:
-        - x86_64
+      - x86_64
       Environment:
         Variables:
-          ENVIRONMENT: !Ref ENVIORMENT
-          SLACKERRORTOKEN: !Ref SLACKERRORTOKEN
-      # Adjust as necessary
+          ENVIRONMENT:
+            Ref: dev
+          SLACKERRORTOKEN:
+            Ref: SLACKERRORTOKEN
+          JIGSAWAPILINK:
+            Ref: http://localhost:8005
+    Metadata:
+      SamResourceId: FinanceCalc
