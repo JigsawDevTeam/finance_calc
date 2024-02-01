@@ -26,7 +26,5 @@ Resources:
             Ref: dev
           SLACKERRORTOKEN:
             Ref: SLACKERRORTOKEN
-          JIGSAWAPILINK:
-            Ref: http://localhost:8005
     Metadata:
       SamResourceId: FinanceCalc
