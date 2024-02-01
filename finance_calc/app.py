@@ -10,11 +10,7 @@ def lambda_handler(event, context):
     print('ENVIROMENT', environment)
     print('event', event)
 
-    envConfig = event
-    try:
-        envConfigObj = json.loads(envConfig)
-    except:
-        envConfigObj = envConfig
+    envConfigObj = event
 
     # Retrieve the bucket name and key from the event
     key = envConfigObj['key']
