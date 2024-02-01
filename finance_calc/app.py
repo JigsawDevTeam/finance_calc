@@ -68,6 +68,7 @@ def lambda_handler(event, context):
         }
     
     print(f'Sending response to {api_link}')
+    print('body', body)
     requests.post(
             f"{api_link}/Finance/insertFinanceValuesToDB", data=json.dumps(body), headers=headers)
      
