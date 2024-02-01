@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 
 def get_direct_formulae():
     return {
@@ -18,7 +19,9 @@ def calculate_values(formula, value_map):
         for key in numbers:
             try:
                 if key in value_map:
-                    updated_values.append(str(value_map[key]))
+                    in_effect_string = value_map[key]['inEffectValue']
+                    in_effect_string = to_camel_case(in_effect_string)
+                    updated_values.append(str(value_map[key][in_effect_string]))
                 else:
                     updated_values.append('0')
             except ValueError as e:
@@ -26,11 +29,15 @@ def calculate_values(formula, value_map):
                 updated_values.append('0')
 
         # Join the updated values with '+' to reconstruct the formula
-        updated_formula = '+'.join(updated_values)
-
-        return eval(updated_formula)
+        try:
+            updated_formula = '+'.join(updated_values)
+            return eval(updated_formula)
+        except:
+            print('ff', updated_values, updated_formula)
+        return 0
+        
     except Exception as e:
-        print(f'Error in calculate values: {e}')
+        print(f'Error in calculate values: {e} {formula}')
         return 0
 
 def input_data_recalc(required_calc_metrics, last12CYMonthsArr, input_data_mapping, company_id, unit, calculated_input_data, date):
@@ -42,7 +49,7 @@ def input_data_recalc(required_calc_metrics, last12CYMonthsArr, input_data_mappi
             'api_cost': 0,
             'unit': unit,
             'month_year': '',
-            'in_effect_value': 'api_cost',
+            'in_effect_value': 'updated_cost',
             'is_percentage': 0,
             'percentage_value': 0,
             'relation_metric_id': 0,
@@ -58,7 +65,7 @@ def input_data_recalc(required_calc_metrics, last12CYMonthsArr, input_data_mappi
                 newObj = {
                     **dummy,
                     'fs_metric_id': i['fsmId'],
-                    'api_cost': calculated_value,
+                    'updated_cost': calculated_value,
                     'unit': unit,
                     'month_year': date,
                 }
@@ -106,9 +113,8 @@ def to_camel_case(text):
         return text
     return s[0] + ''.join(i.capitalize() for i in s[1:])
 
-def getCOGS(product_cost, company_id, fst_metric):
-    product_cost_df = pd.DataFrame(product_cost)
-    product_cost_df['COGS'] = product_cost_df['apiCost'] * product_cost_df['quantity']
+def getCOGS(product_cost_df, company_id, fst_metric):
+    product_cost_df['COGS'] = np.where(product_cost_df['inEffectValue'] == 'api_cost', product_cost_df['apiCost'], product_cost_df['updatedCost']) * product_cost_df['quantity']
     unit = product_cost_df['unit'].unique()[0]
     month_wise_product_cost_df = product_cost_df.groupby('monthYear').agg({'COGS': 'sum'}).reset_index()
     month_wise_product_cost_df['COGS'] = round(month_wise_product_cost_df['COGS'], 0)
@@ -133,9 +139,27 @@ def getCOGS(product_cost, company_id, fst_metric):
         cogs_finance_mapping[row['monthYear']] = row['COGS']
     return COGS, cogs_finance_mapping
 
-def get_single_fs_values(fst_metric, last12CYMonthsArr, input_data_mapping, metrics_mapping, company_id, unit, fst_temp_values, calculated_input_data, required_calc_metrics_names, finance_statement_table, required_calc_metrics, product_cost):
+def get_single_fs_values(fst_metric, last12CYMonthsArr, input_data_mapping, metrics_mapping, company_id, unit, fst_temp_values, calculated_input_data, required_calc_metrics_names, finance_statement_table, required_calc_metrics, product_cost, updated_product_costs):
     
-    COGS, cogs_finance_mapping = getCOGS(product_cost, company_id, fst_metric)
+    product_cost_df = pd.DataFrame(product_cost)
+    # Product Cost Recalculation
+    def recalc_product_costs(product_cost_df):
+        try:
+            product_cost_df['percentageValue'] = product_cost_df['percentageValue'].astype(float)
+            product_cost_df['price'] = product_cost_df['price'].astype(float)
+            product_cost_df['isNew'] = product_cost_df['isNew'].astype(bool).fillna(False)
+            product_cost_df['recalc'] = product_cost_df['isNew'] | product_cost_df['isPercentage']
+            product_cost_df['updatedCost'] = np.where((product_cost_df['isPercentage'] == True), round(((product_cost_df['price'] * product_cost_df['percentageValue']) / 100),2), product_cost_df['updatedCost'])
+            recalc_product_cost_df = product_cost_df[product_cost_df['recalc'] == True].reset_index(drop = True)
+            recalc_product_cost_df = recalc_product_cost_df.fillna(0)
+            updated_product_costs = recalc_product_cost_df.to_dict(orient='records')
+            return updated_product_costs
+        except Exception as e:
+            print(f'Error in recalc_product_costs: {e}')
+    
+    updated_product_costs = recalc_product_costs(product_cost_df)
+    
+    COGS, cogs_finance_mapping = getCOGS(product_cost_df, company_id, fst_metric)
     direct_formulae = get_direct_formulae()
     allData = COGS
     # CHECK IF LOGIC IS ON LAMBDA
@@ -236,7 +260,7 @@ def get_single_fs_values(fst_metric, last12CYMonthsArr, input_data_mapping, metr
                 }
                 allData.append(dummy)
                 
-    return allData, fst_temp_values
+    return allData, fst_temp_values, updated_product_costs
 
 
 def calculate_relation_input_data(input_data_mapping, date, fst_temp_values, finance_statement_table, metricId, calculated_input_data):
@@ -244,7 +268,8 @@ def calculate_relation_input_data(input_data_mapping, date, fst_temp_values, fin
         single_input_data = input_data_mapping[date][metricId]
         relation_type = single_input_data['relationType']
         relation_metric_id = single_input_data['relationMetricId']
-        relation_type, relation_metric_id
+        if not relation_metric_id:
+            return
 
         temp_value = -1
         if relation_type == 'statement':
@@ -277,4 +302,5 @@ def calculate_relation_input_data(input_data_mapping, date, fst_temp_values, fin
 
             calculated_input_data.append(dummy)
     except Exception as e:
+        print('metricId', metricId)
         print(f'Error in calculate_relation_input_data: {e}')
