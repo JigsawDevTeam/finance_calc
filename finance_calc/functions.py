@@ -5,7 +5,7 @@ def get_direct_formulae():
     return {
         'Net Sales': 'Sales-Returns+GST+Other Income',
         'Gross Profit': 'Net Sales-Cost of Goods Sold',
-        'Gross Profit %': 'Sales/Gross Profit',
+        'Gross Profit %': '(Gross Profit/Sales)*100',
         'CM1': 'Gross Profit-Shipping Cost-Packaging',
         'CM2': 'CM1-Ad Spend-Platform Comission-Additional Costs',
     }
