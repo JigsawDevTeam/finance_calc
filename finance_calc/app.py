@@ -75,7 +75,7 @@ def lambda_handler(event, context):
         "body": body,
     }
 
-with open('events/event.json', 'r') as file:
-    data = json.load(file)
+# with open('events/event.json', 'r') as file:
+#     data = json.load(file)
 
-print(lambda_handler(data, {}))
+# print(lambda_handler(data, {}))
