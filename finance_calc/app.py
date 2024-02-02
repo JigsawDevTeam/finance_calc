@@ -22,6 +22,8 @@ def lambda_handler(event, context):
         data = json.loads(data)
     except:
         data = data
+
+    print('data', data)
     
     # INPUT DATA RECALCULATION
     api_link = data['apiLink']
