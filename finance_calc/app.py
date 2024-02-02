@@ -32,6 +32,7 @@ def lambda_handler(event, context):
     input_data_mapping = data['inputDataMapping']
     finance_statement_table = data['financeStatementTable']
     company_id = data['companyId']
+    job_id = data['jobId']
     product_cost = data['productCost']
     unit = '₹'
 
@@ -58,7 +59,8 @@ def lambda_handler(event, context):
             "updatedProductCosts": updated_product_costs,
             "inputData": calculated_input_data,
             "financeStatementValues": financial_statement_values,
-            "companyId": company_id
+            "companyId": company_id,
+            "jobId": job_id
         }
     
     headers = {
