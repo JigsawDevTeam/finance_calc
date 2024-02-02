@@ -147,7 +147,10 @@ def get_single_fs_values(fst_metric, last12CYMonthsArr, input_data_mapping, metr
         try:
             product_cost_df['percentageValue'] = product_cost_df['percentageValue'].astype(float)
             product_cost_df['price'] = product_cost_df['price'].astype(float)
-            product_cost_df['isNew'] = product_cost_df['isNew'].astype(bool).fillna(False)
+            if 'isNew' in product_cost_df:
+                product_cost_df['isNew'] = product_cost_df['isNew'].astype(bool).fillna(False)
+            else:
+                product_cost_df['isNew'] = False
             product_cost_df['recalc'] = product_cost_df['isNew'] | product_cost_df['isPercentage']
             product_cost_df['updatedCost'] = np.where((product_cost_df['isPercentage'] == True), round(((product_cost_df['price'] * product_cost_df['percentageValue']) / 100),2), product_cost_df['updatedCost'])
             recalc_product_cost_df = product_cost_df[product_cost_df['recalc'] == True].reset_index(drop = True)
