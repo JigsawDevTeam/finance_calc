@@ -251,17 +251,18 @@ def get_single_fs_values(fst_metric, last12CYMonthsArr, input_data_mapping, metr
                 growth[currDate] = diff
 
                 # Storing for data requirement in lambda logic FST
-                fst_temp_values[currDate][fst_metric['name']] = total
+                fst_temp_values[currDate][fst_metric['name']] = diff
 
                 # Storing for DB storage
                 dummy = {
                     'financial_statement_id': fst_metric['id'],
                     'company_id': company_id,
                     'month_year': currDate,
-                    'value': total,
+                    'value': diff,
                     'unit': unit,
                 }
                 allData.append(dummy)
+                print(allData[len(allData) - 1])
                 
     return allData, fst_temp_values, updated_product_costs
 
