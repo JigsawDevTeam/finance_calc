@@ -7,7 +7,7 @@ def get_direct_formulae():
         'Gross Profit': 'Net Sales-Cost of Goods Sold',
         'Gross Profit %': '(Gross Profit/Sales)*100',
         'CM1': 'Gross Profit-Shipping Cost-Packaging Cost',
-        'CM2': 'CM1-Ad Spend-Platform Commission-Additional Costs',
+        'CM2': 'CM1-Ad Spend-Platform Commission-Additional Cost',
     }
 
 def calculate_values(formula, value_map):
