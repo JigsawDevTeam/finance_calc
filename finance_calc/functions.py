@@ -114,30 +114,34 @@ def to_camel_case(text):
     return s[0] + ''.join(i.capitalize() for i in s[1:])
 
 def getCOGS(product_cost_df, company_id, fst_metric):
-    product_cost_df['COGS'] = np.where(product_cost_df['inEffectValue'] == 'api_cost', product_cost_df['apiCost'], product_cost_df['updatedCost']) * product_cost_df['quantity']
-    unit = product_cost_df['unit'].unique()[0]
-    month_wise_product_cost_df = product_cost_df.groupby('monthYear').agg({'COGS': 'sum'}).reset_index()
-    month_wise_product_cost_df['COGS'] = round(month_wise_product_cost_df['COGS'], 0)
-    
-    # Storing for DB storage
-    dummy = {
-        'financial_statement_id': fst_metric['id'],
-        'company_id': company_id,
-        'month_year': '',
-        'value': 0,
-        'unit': unit,
-    }
+    try:
+        product_cost_df['COGS'] = np.where(product_cost_df['inEffectValue'] == 'api_cost', product_cost_df['apiCost'], product_cost_df['updatedCost']) * product_cost_df['quantity']
+        unit = product_cost_df['unit'].unique()[0]
+        month_wise_product_cost_df = product_cost_df.groupby('monthYear').agg({'COGS': 'sum'}).reset_index()
+        month_wise_product_cost_df['COGS'] = round(month_wise_product_cost_df['COGS'], 0)
+        
+        # Storing for DB storage
+        dummy = {
+            'financial_statement_id': fst_metric['id'],
+            'company_id': company_id,
+            'month_year': '',
+            'value': 0,
+            'unit': unit,
+        }
 
-    COGS = []
-    cogs_finance_mapping = {}
-    for index, row in month_wise_product_cost_df.iterrows():
-        COGS.append({
-            **dummy,
-            'value': row['COGS'],
-            'month_year': row['monthYear']
-        })
-        cogs_finance_mapping[row['monthYear']] = row['COGS']
-    return COGS, cogs_finance_mapping
+        COGS = []
+        cogs_finance_mapping = {}
+        for index, row in month_wise_product_cost_df.iterrows():
+            COGS.append({
+                **dummy,
+                'value': row['COGS'],
+                'month_year': row['monthYear']
+            })
+            cogs_finance_mapping[row['monthYear']] = row['COGS']
+        return COGS, cogs_finance_mapping
+    except Exception as e:
+        print(f'Error in getCOGS: {e}')
+    
 
 def get_single_fs_values(fst_metric, last12CYMonthsArr, input_data_mapping, metrics_mapping, company_id, unit, fst_temp_values, calculated_input_data, required_calc_metrics_names, finance_statement_table, required_calc_metrics, product_cost, updated_product_costs):
     
