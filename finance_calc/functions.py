@@ -141,6 +141,7 @@ def getCOGS(product_cost_df, company_id, fst_metric):
         return COGS, cogs_finance_mapping
     except Exception as e:
         print(f'Error in getCOGS: {e}')
+        return [],{}   
     
 
 def get_single_fs_values(fst_metric, last12CYMonthsArr, input_data_mapping, metrics_mapping, company_id, unit, fst_temp_values, calculated_input_data, required_calc_metrics_names, finance_statement_table, required_calc_metrics, product_cost, updated_product_costs):
