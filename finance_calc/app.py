@@ -68,7 +68,10 @@ def lambda_handler(event, context):
         }
     
     print(f'Sending response to {api_link}')
-    print('body', body)
+
+    
+    
+    # print('body', body)
     requests.post(
             f"{api_link}/Finance/insertFinanceValuesToDB", data=json.dumps(body), headers=headers)
      
@@ -77,7 +80,10 @@ def lambda_handler(event, context):
         "body": body,
     }
 
-# with open('events/event.json', 'r') as file:
+# with open('../events/event.json', 'r') as file:
 #     data = json.load(file)
 
-# print(lambda_handler(data, {}))
+# lambda_handler({
+#     "bucket": "uploadfiles-jigsaw",
+#     "key": "23_dev/financeCalcDev-FinanceCalc-tUyY8ekJ6gGl/lambdaFinanceCalcPayload.json"
+# }, None)

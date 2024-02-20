@@ -7,7 +7,9 @@ def get_direct_formulae():
         'Gross Profit': 'Net Sales-Cost of Goods Sold',
         'Gross Profit %': '(Gross Profit/Sales)*100',
         'CM1': 'Gross Profit-Shipping Cost-Packaging Cost',
+        'CM1 %': '(CM1/Net Sales)*100',
         'CM2': 'CM1-Ad Spend-Platform Commission-Additional Cost',
+        'CM2 %': '(CM2/Net Sales)*100',
     }
 
 def calculate_values(formula, value_map):
@@ -198,7 +200,8 @@ def get_single_fs_values(fst_metric, last12CYMonthsArr, input_data_mapping, metr
 
                             inEffectString = input_data_mapping[date][metricId]['inEffectValue']
                             inEffectString = to_camel_case(inEffectString)
-                            total += input_data_mapping[date][metricId][inEffectString]
+                            # print(input_data_mapping[date][metricId][inEffectString], inEffectString)
+                            total += input_data_mapping[date][metricId][inEffectString] if input_data_mapping[date][metricId][inEffectString] != None else 0
 
                     # Storing for DB storage
                     dummy = {
