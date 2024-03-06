@@ -3,7 +3,7 @@ import numpy as np
 
 def get_direct_formulae():
     return {
-        'Net Sales': 'Sales+GST+Other Income',
+        'Net Sales': 'Sales+Taxes Collected+Other Income',
         'Gross Profit': 'Net Sales-Cost of Goods Sold',
         'Gross Profit %': '(Gross Profit/Sales)*100',
         'CM1': 'Gross Profit-Shipping Cost-Packaging Cost',
