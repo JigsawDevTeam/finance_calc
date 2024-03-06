@@ -1,6 +1,6 @@
 import json
 import pandas as pd
-from functions import get_direct_formulae, calculate_values, input_data_recalc, calculate_values_str_formula, get_metrics_mapping, to_camel_case, get_single_fs_values 
+from functions import get_direct_formulae, calculate_values, input_data_recalc, calculate_values_str_formula, get_metrics_mapping, to_camel_case, get_single_fs_values, get_cogs_finance_mapping
 import os
 import requests
 from fetchS3 import get_combined_files
@@ -8,7 +8,7 @@ from fetchS3 import get_combined_files
 def lambda_handler(event, context):
     environment = os.environ.get('ENVIRONMENT')
     print('ENVIROMENT', environment)
-    print('event', event)
+    # print('event', event)
 
     envConfigObj = event
 
@@ -23,7 +23,7 @@ def lambda_handler(event, context):
     except:
         data = data
 
-    print('data', data)
+    # print('data', data)
     
     # INPUT DATA RECALCULATION
     api_link = data['apiLink']
@@ -46,13 +46,13 @@ def lambda_handler(event, context):
             required_calc_metrics_names.append(i['fsmName'])
     
     metrics_mapping = get_metrics_mapping(metric_mapping_data)
+    cogs_finance_mapping, updated_product_costs = get_cogs_finance_mapping(product_cost)
     
     ## CALCULATING FINANCIAL STATEMENTS
     financial_statement_values = []
     fst_temp_values = {}
-    updated_product_costs = []
     for fst_metric in finance_statement_table:
-        all_calc_value, fst_temp_values, updated_product_costs = get_single_fs_values(fst_metric, last12CYMonthsArr, input_data_mapping, metrics_mapping, company_id, unit, fst_temp_values, calculated_input_data, required_calc_metrics_names, finance_statement_table, required_calc_metrics, product_cost, updated_product_costs)
+        all_calc_value, fst_temp_values = get_single_fs_values(fst_metric, last12CYMonthsArr, input_data_mapping, metrics_mapping, company_id, unit, fst_temp_values, calculated_input_data, required_calc_metrics_names, finance_statement_table, required_calc_metrics, cogs_finance_mapping)
         financial_statement_values += all_calc_value
         
     body = {
@@ -80,10 +80,7 @@ def lambda_handler(event, context):
         "body": body,
     }
 
-# with open('../events/event.json', 'r') as file:
-#     data = json.load(file)
-
-# lambda_handler({
-#     "bucket": "uploadfiles-jigsaw",
-#     "key": "23_dev/financeCalcDev-FinanceCalc-tUyY8ekJ6gGl/lambdaFinanceCalcPayload.json"
-# }, None)
+lambda_handler({
+    "bucket":"uploadfiles-jigsaw",
+    "key":"97_dev/financeCalcDev-FinanceCalc-tUyY8ekJ6gGl/payload-1709723821861.json"
+}, None)

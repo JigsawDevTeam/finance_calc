@@ -115,39 +115,18 @@ def to_camel_case(text):
         return text
     return s[0] + ''.join(i.capitalize() for i in s[1:])
 
-def getCOGS(product_cost_df, company_id, fst_metric):
-    try:
-        product_cost_df['COGS'] = np.where(product_cost_df['inEffectValue'] == 'api_cost', product_cost_df['apiCost'], product_cost_df['updatedCost']) * product_cost_df['quantity']
-        unit = product_cost_df['unit'].unique()[0]
-        month_wise_product_cost_df = product_cost_df.groupby('monthYear').agg({'COGS': 'sum'}).reset_index()
-        month_wise_product_cost_df['COGS'] = round(month_wise_product_cost_df['COGS'], 0)
-        
-        # Storing for DB storage
-        dummy = {
-            'financial_statement_id': fst_metric['id'],
-            'company_id': company_id,
-            'month_year': '',
-            'value': 0,
-            'unit': unit,
-        }
+def getCOGS(product_cost_df):
+    product_cost_df['COGS'] = np.where(product_cost_df['inEffectValue'] == 'api_cost', product_cost_df['apiCost'], product_cost_df['updatedCost']) * product_cost_df['quantity']
+    unit = product_cost_df['unit'].unique()[0]
+    month_wise_product_cost_df = product_cost_df.groupby('monthYear').agg({'COGS': 'sum'}).reset_index()
+    month_wise_product_cost_df['COGS'] = round(month_wise_product_cost_df['COGS'], 0)
 
-        COGS = []
-        cogs_finance_mapping = {}
-        for index, row in month_wise_product_cost_df.iterrows():
-            COGS.append({
-                **dummy,
-                'value': row['COGS'],
-                'month_year': row['monthYear']
-            })
-            cogs_finance_mapping[row['monthYear']] = row['COGS']
-        return COGS, cogs_finance_mapping
-    except Exception as e:
-        print(f'Error in getCOGS: {e}')
-        return [],{}   
-    
+    cogs_finance_mapping = {}
+    for index, row in month_wise_product_cost_df.iterrows():
+        cogs_finance_mapping[row['monthYear']] = row['COGS']
+    return cogs_finance_mapping
 
-def get_single_fs_values(fst_metric, last12CYMonthsArr, input_data_mapping, metrics_mapping, company_id, unit, fst_temp_values, calculated_input_data, required_calc_metrics_names, finance_statement_table, required_calc_metrics, product_cost, updated_product_costs):
-    
+def get_cogs_finance_mapping(product_cost):
     product_cost_df = pd.DataFrame(product_cost)
     # Product Cost Recalculation
     def recalc_product_costs(product_cost_df):
@@ -169,9 +148,12 @@ def get_single_fs_values(fst_metric, last12CYMonthsArr, input_data_mapping, metr
     
     updated_product_costs = recalc_product_costs(product_cost_df)
     
-    COGS, cogs_finance_mapping = getCOGS(product_cost_df, company_id, fst_metric)
+    cogs_finance_mapping = getCOGS(product_cost_df)
+    return cogs_finance_mapping, updated_product_costs
+
+def get_single_fs_values(fst_metric, last12CYMonthsArr, input_data_mapping, metrics_mapping, company_id, unit, fst_temp_values, calculated_input_data, required_calc_metrics_names, finance_statement_table, required_calc_metrics, cogs_finance_mapping):
     direct_formulae = get_direct_formulae()
-    allData = COGS
+    allData = []
     # CHECK IF LOGIC IS ON LAMBDA
     if not fst_metric['isLambdaLogic']:
         tempObj = {}
@@ -272,7 +254,7 @@ def get_single_fs_values(fst_metric, last12CYMonthsArr, input_data_mapping, metr
                 allData.append(dummy)
                 print(allData[len(allData) - 1])
                 
-    return allData, fst_temp_values, updated_product_costs
+    return allData, fst_temp_values
 
 
 def calculate_relation_input_data(input_data_mapping, date, fst_temp_values, finance_statement_table, metricId, calculated_input_data):
