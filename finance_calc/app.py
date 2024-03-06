@@ -80,7 +80,7 @@ def lambda_handler(event, context):
         "body": body,
     }
 
-lambda_handler({
-    "bucket":"uploadfiles-jigsaw",
-    "key":"97_dev/financeCalcDev-FinanceCalc-tUyY8ekJ6gGl/payload-1709723821861.json"
-}, None)
+# lambda_handler({
+#     "bucket":"uploadfiles-jigsaw",
+#     "key":"97_dev/financeCalcDev-FinanceCalc-tUyY8ekJ6gGl/payload-1709723821861.json"
+# }, None)
