@@ -171,6 +171,7 @@ def get_single_fs_values(fst_metric, last12CYMonthsArr, input_data_mapping, metr
                         'value': total,
                         'unit': unit
                     }
+                    allData.append(dummy)
             else:
                 # NORMAL METRICS
                 if date in input_data_mapping:
