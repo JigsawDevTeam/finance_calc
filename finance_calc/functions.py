@@ -164,6 +164,13 @@ def get_single_fs_values(fst_metric, last12CYMonthsArr, input_data_mapping, metr
             if fst_metric['name'] == 'Cost of Goods Sold':
                 if date in cogs_finance_mapping:
                     total = cogs_finance_mapping[date]
+                    dummy = {
+                        'financial_statement_id': fst_metric['id'],
+                        'company_id': company_id,
+                        'month_year': date,
+                        'value': total,
+                        'unit': unit
+                    }
             else:
                 # NORMAL METRICS
                 if date in input_data_mapping:
