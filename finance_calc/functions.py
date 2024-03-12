@@ -151,9 +151,13 @@ def get_cogs_finance_mapping(product_cost):
     cogs_finance_mapping = getCOGS(product_cost_df)
     return cogs_finance_mapping, updated_product_costs
 
-def get_single_fs_values(fst_metric, last12CYMonthsArr, input_data_mapping, metrics_mapping, company_id, unit, fst_temp_values, calculated_input_data, required_calc_metrics_names, finance_statement_table, required_calc_metrics, cogs_finance_mapping):
+def get_single_fs_values(fst_metric, last12CYMonthsArr, input_data_mapping, metrics_mapping, company_id, unit, fst_temp_values, calculated_input_data, required_calc_metrics_names, finance_statement_table, required_calc_metrics, cogs_finance_mapping,moveType):
     direct_formulae = get_direct_formulae()
     allData = []
+    if moveType == 'Monthly':
+        mid_month_boolean_value = 0
+    else:
+        mid_month_boolean_value = 1  
     # CHECK IF LOGIC IS ON LAMBDA
     if not fst_metric['isLambdaLogic']:
         tempObj = {}
@@ -164,12 +168,14 @@ def get_single_fs_values(fst_metric, last12CYMonthsArr, input_data_mapping, metr
             if fst_metric['name'] == 'Cost of Goods Sold':
                 if date in cogs_finance_mapping:
                     total = cogs_finance_mapping[date]
+                    # Storing for DB storage
                     dummy = {
                         'financial_statement_id': fst_metric['id'],
                         'company_id': company_id,
                         'month_year': date,
                         'value': total,
-                        'unit': unit
+                        'unit': unit,
+                        'is_mid_month': mid_month_boolean_value
                     }
                     allData.append(dummy)
             else:
@@ -200,6 +206,7 @@ def get_single_fs_values(fst_metric, last12CYMonthsArr, input_data_mapping, metr
                         'month_year': date,
                         'value': total,
                         'unit': unit,
+                        'is_mid_month': mid_month_boolean_value
                     }
                     allData.append(dummy)
 
@@ -230,6 +237,7 @@ def get_single_fs_values(fst_metric, last12CYMonthsArr, input_data_mapping, metr
                             'month_year': date,
                             'value': total,
                             'unit': unit,
+                            'is_mid_month': mid_month_boolean_value
                         }
                         allData.append(dummy)
         else:
@@ -258,12 +266,12 @@ def get_single_fs_values(fst_metric, last12CYMonthsArr, input_data_mapping, metr
                     'month_year': currDate,
                     'value': diff,
                     'unit': unit,
+                    'is_mid_month': mid_month_boolean_value
                 }
                 allData.append(dummy)
                 print(allData[len(allData) - 1])
                 
     return allData, fst_temp_values
-
 
 def calculate_relation_input_data(input_data_mapping, date, fst_temp_values, finance_statement_table, metricId, calculated_input_data):
     try:
