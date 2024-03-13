@@ -106,8 +106,15 @@ def sales_spend_move(cm2_change_pct,cm2_last,cm2_this,sales_change_pct,sales_las
 #     print('sales_trend',sales_trend)
 #     print('spend_trend',spend_trend)
 
-    formatted_sales_change = f"{abs(sales_change_pct):.1f}" if not (sales_change_pct).is_integer() else f"{abs(sales_change_pct):.0f}"
-    formatted_spend_change = f"{abs(spend_change_pct):.1f}" if not (spend_change_pct).is_integer() else f"{abs(spend_change_pct):.0f}"
+    try:
+        formatted_sales_change = f"{abs(sales_change_pct):.1f}" if not (sales_change_pct).is_integer() else f"{abs(sales_change_pct):.0f}"
+    except:
+        formatted_sales_change = f"{abs(sales_change_pct):.1f}" 
+    try:
+        formatted_spend_change = f"{abs(spend_change_pct):.1f}" if not (spend_change_pct).is_integer() else f"{abs(spend_change_pct):.0f}"
+    except:
+        formatted_spend_change = f"{abs(spend_change_pct):.1f}"
+        
     
     if sales_trend != spend_trend:
     
@@ -135,7 +142,9 @@ def sales_spend_move(cm2_change_pct,cm2_last,cm2_this,sales_change_pct,sales_las
             elif sales_trend == "steady" and spend_trend == "decreased":
                 # Steady Sales & Spend Decrease
                 message += f" This is due to a decrease in Ad Spend to {format_value(spend_this)} from {format_value(spend_last)}{suffix}, despite no decrease in Net Sales."
-
+            else:
+                message = ''
+                
         elif cm2_trend == "fell":
             if sales_trend == "decreased" and spend_trend == "increased":
                 # Sales Decrease & Spend Increase
@@ -152,7 +161,9 @@ def sales_spend_move(cm2_change_pct,cm2_last,cm2_this,sales_change_pct,sales_las
             elif sales_trend == "decreased" and spend_trend == "steady":
                 # Sales Decrease & Steady Spend
                 message += f" This is due to a decrease in Net Sales to {format_value(sales_this)} from {format_value(sales_last)}{suffix}, despite no decrease in Ad Spend."
-
+            else:
+                message = ''
+                
         return message
     else:
         return ''
@@ -178,8 +189,14 @@ def cogs_sales_move(gp_change_pct,gp_last,gp_this,sales_change_pct,sales_last,sa
 #     print('sales_trend',sales_trend)
 #     print('cogs_trend',cogs_trend)
 
-    formatted_sales_change = f"{abs(sales_change_pct):.1f}" if not (sales_change_pct).is_integer() else f"{abs(sales_change_pct):.0f}"
-    formatted_cogs_change = f"{abs(cogs_change_pct):.1f}" if not (cogs_change_pct).is_integer() else f"{abs(cogs_change_pct):.0f}"
+    try:
+        formatted_sales_change = f"{abs(sales_change_pct):.1f}" if not (sales_change_pct).is_integer() else f"{abs(sales_change_pct):.0f}"
+    except:
+        formatted_sales_change = f"{abs(sales_change_pct):.1f}"
+    try:
+        formatted_cogs_change = f"{abs(cogs_change_pct):.1f}" if not (cogs_change_pct).is_integer() else f"{abs(cogs_change_pct):.0f}"
+    except:
+        formatted_cogs_change = f"{abs(cogs_change_pct):.1f}"
     
 #     print('formatted_sales_change',formatted_sales_change)
 #     print('formatted_cogs_change',formatted_cogs_change)
@@ -236,10 +253,10 @@ def primary_secondary_single_move(primary_metric, primary_this, primary_last, se
     # Determine the direction of change for the primary metric
     if primary_this > primary_last:
         primary_change = "increased"
-        primary_effect = "reduced"
+        primary_effect = "increased"  # Use 'increased' if primary metric fell
     else:
         primary_change = "fell"
-        primary_effect = "increased"
+        primary_effect = "reduced"  # Use 'reduced' if primary metric increased
 
     if moveType != 'Monthly':
         primary_change_pct = custom_round(getPerChange(primary_last, primary_this))    
@@ -272,10 +289,10 @@ def primary_secondary_double_move(primary_metric, primary_this, primary_last, se
     # Determine the direction of change for the primary metric
     if primary_this > primary_last:
         primary_change = "increased"
-        primary_effect = "reduced"  # Use 'reduced' if primary metric increased
+        primary_effect = "increased"  # Use 'increased' if primary metric fell
     else:
         primary_change = "fell"
-        primary_effect = "increased"  # Use 'increased' if primary metric fell
+        primary_effect = "reduced"  # Use 'reduced' if primary metric increased
     
     if moveType != 'Monthly':
         primary_change_pct = custom_round(getPerChange(primary_last, primary_this))
@@ -373,7 +390,6 @@ def subset_df(financial_statement_id_mapping,inner_this,inner_last,metric_name1,
     else:
         df_subset = financial_statement_id_mapping.loc[start_idx+1:end_idx-1]
         
-        
     if metric_name2 == 'CM2':
         df_subset = df_subset[df_subset['name'] != 'Ad Spend']
 
@@ -407,35 +423,35 @@ def calculate_growth(financial_statement_values, parsed_data, mid_financial_stat
     cm1_threshold = 5
     cm2_threshold = 3
     
-#     #Dates for manipulation
-#     # Current Date in "mm-yyyy"
-#     current_month = (datetime.now()- timedelta(days=30)).strftime('%m-%Y')
-
-#     # Previous Month-Year
-#     previous_month_year = ((datetime.now()- timedelta(days=30)).replace(day=1) - timedelta(days=1)).strftime('%m-%Y')
-
-#     # Before Previous Month-Year
-#     before_previous_month_year = ((datetime.now()- timedelta(days=30)).replace(day=1) - timedelta(days=1)).replace(day=1) - timedelta(days=1)
-#     before_previous_month_year = before_previous_month_year.strftime('%m-%Y')
-
-#     print("Current Month (mm-yyyy):", current_month)
-#     print("Previous Month-Year (mm-yyyy):", previous_month_year)
-#     print("Before Previous Month-Year (mm-yyyy):", before_previous_month_year)
-    
-
+    #Dates for manipulation
     # Current Date in "mm-yyyy"
-    current_month = datetime.now().strftime('%m-%Y')
+    current_month = (datetime.now()- timedelta(days=30)).strftime('%m-%Y')
 
     # Previous Month-Year
-    previous_month_year = (datetime.now().replace(day=1) - timedelta(days=1)).strftime('%m-%Y')
+    previous_month_year = ((datetime.now()- timedelta(days=30)).replace(day=1) - timedelta(days=1)).strftime('%m-%Y')
 
     # Before Previous Month-Year
-    before_previous_month_year = (datetime.now().replace(day=1) - timedelta(days=1)).replace(day=1) - timedelta(days=1)
+    before_previous_month_year = ((datetime.now()- timedelta(days=30)).replace(day=1) - timedelta(days=1)).replace(day=1) - timedelta(days=1)
     before_previous_month_year = before_previous_month_year.strftime('%m-%Y')
 
     print("Current Month (mm-yyyy):", current_month)
     print("Previous Month-Year (mm-yyyy):", previous_month_year)
     print("Before Previous Month-Year (mm-yyyy):", before_previous_month_year)
+    
+
+#     # Current Date in "mm-yyyy"
+#     current_month = datetime.now().strftime('%m-%Y')
+
+#     # Previous Month-Year
+#     previous_month_year = (datetime.now().replace(day=1) - timedelta(days=1)).strftime('%m-%Y')
+
+#     # Before Previous Month-Year
+#     before_previous_month_year = (datetime.now().replace(day=1) - timedelta(days=1)).replace(day=1) - timedelta(days=1)
+#     before_previous_month_year = before_previous_month_year.strftime('%m-%Y')
+
+#     print("Current Month (mm-yyyy):", current_month)
+#     print("Previous Month-Year (mm-yyyy):", previous_month_year)
+#     print("Before Previous Month-Year (mm-yyyy):", before_previous_month_year)
     
     
     flattened_records = flatten_data(parsed_data['inputDataMapping'])
@@ -503,10 +519,10 @@ def calculate_growth(financial_statement_values, parsed_data, mid_financial_stat
 
         mid_outer_df = mid_df_financial.merge(financial_statement_id_mapping,on='financial_statement_id',how='left')
 
+        # Date to be changed wrong hai ---------------------------------------------------------------------------------------------------
         mid_outer_this = mid_outer_df[mid_outer_df['month_year'] == previous_month_year]#current_month]
         mid_outer_last = mid_outer_df[mid_outer_df['month_year'] == before_previous_month_year]#previous_month_year]
 
-        # Date to be changed wrong hai ---------------------------------------------------------------------------------------------------
         mid_inner_this = mid_inner_df[mid_inner_df['monthYear'] == previous_month_year]
         mid_inner_last = mid_inner_df[mid_inner_df['monthYear'] == before_previous_month_year]
     
@@ -553,12 +569,13 @@ def calculate_growth(financial_statement_values, parsed_data, mid_financial_stat
 
                 growth_move_direction = 'increase' if growth_rate_change > 0 else 'decrease'
 
-                moves['% Growth'] = insightDict(
-                                '% Growth', 
-                                percentage_growth_move, 
-                                growth_move_direction,
-                                0
-                            )
+                if (len(result_growth) == 1) or (len(result_growth) == 2):
+                    moves['% Growth'] = insightDict(
+                                    '% Growth', 
+                                    percentage_growth_move, 
+                                    growth_move_direction,
+                                    0
+                                )
             
         if midMonthData:
             # Mid Monthly Move
@@ -594,12 +611,13 @@ def calculate_growth(financial_statement_values, parsed_data, mid_financial_stat
 
                 mid_growth_move_direction = 'increase' if growth_rate_change > 0 else 'decrease'
 
-                moves['% Growth'] = insightDict(
-                            '% Growth', 
-                            mid_percentage_growth_move, 
-                            mid_growth_move_direction,
-                            1
-                        )
+                if (len(result_growth) == 1) or (len(result_growth) == 2):
+                    moves['% Growth'] = insightDict(
+                                '% Growth', 
+                                mid_percentage_growth_move, 
+                                mid_growth_move_direction,
+                                1
+                            )
             
     except Exception as e:
         print(f'Error in % Growth Move: {e}')
@@ -703,12 +721,13 @@ def calculate_growth(financial_statement_values, parsed_data, mid_financial_stat
 
                 cm1_move_direction = 'increase' if cm1_rate_change > 0 else 'decrease'
 
-                moves['CM1 %'] = insightDict(
-                                'CM1 %', 
-                                percentage_cm1_move, 
-                                cm1_move_direction,
-                                0
-                            )
+                if (len(result_cm_1) == 1) or (len(result_cm_1) == 2):
+                    moves['CM1 %'] = insightDict(
+                                    'CM1 %', 
+                                    percentage_cm1_move, 
+                                    cm1_move_direction,
+                                    0
+                                )
 
             
         if midMonthData:
@@ -742,13 +761,14 @@ def calculate_growth(financial_statement_values, parsed_data, mid_financial_stat
                     mid_percentage_cm1_move = primary_secondary_double_move(primary_metric, primary_this, primary_last, secondary_metric_1, secondary_this_1, secondary_last_1, secondary_metric_2, secondary_this_2, secondary_last_2, mt_effected, last_month_name,moveType='MidMonth')
 
                 mid_cm1_move_direction = 'increase' if cm1_rate_change > 0 else 'decrease'
-
-                moves['CM1 %'] = insightDict(
-                            'CM1 %', 
-                            mid_percentage_cm1_move, 
-                            mid_cm1_move_direction,
-                            1
-                        )            
+                
+                if (len(result_cm1) == 1) or (len(result_cm1) == 2):
+                    moves['CM1 %'] = insightDict(
+                                'CM1 %', 
+                                mid_percentage_cm1_move, 
+                                mid_cm1_move_direction,
+                                1
+                            )            
     except Exception as e:
         print(f'Error in CM1 % Move: {e}')
         
@@ -821,12 +841,13 @@ def calculate_growth(financial_statement_values, parsed_data, mid_financial_stat
 
                     cm2_move_direction = 'increase' if cm2_rate_change > 0 else 'decrease'
 
-                    moves['CM2 %'] = insightDict(
-                                    'CM2 %', 
-                                    percentage_cm2_move, 
-                                    cm2_move_direction,
-                                    0
-                                )
+                    if (len(result_cm_2) == 1) or (len(result_cm_2) == 2):
+                        moves['CM2 %'] = insightDict(
+                                        'CM2 %', 
+                                        percentage_cm2_move, 
+                                        cm2_move_direction,
+                                        0
+                                    )
                 
         if midMonthData:
             sales_spend_diff = sumOfColumnValue(mid_outer_this,['Net Sales', 'Ad Spend']) - sumOfColumnValue(mid_outer_last,['Net Sales', 'Ad Spend'])
@@ -889,13 +910,14 @@ def calculate_growth(financial_statement_values, parsed_data, mid_financial_stat
 
                     mid_cm2_move_direction = 'increase' if cm2_rate_change > 0 else 'decrease'
 
-                    moves['CM2 %'] = insightDict(
-                                'CM2 %', 
-                                mid_percentage_cm2_move, 
-                                mid_cm2_move_direction,
-                                1
-                            )            
-                
+                    if (len(result_cm2) == 1) or (len(result_cm2) == 2):
+                        moves['CM2 %'] = insightDict(
+                                    'CM2 %', 
+                                    mid_percentage_cm2_move, 
+                                    mid_cm2_move_direction,
+                                    1
+                                )            
+
     except Exception as e:
         print(f'Error in CM2 % Move: {e}')        
         
