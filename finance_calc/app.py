@@ -27,8 +27,6 @@ def lambda_handler(event, context):
     
     parsed_data = copy.deepcopy(data)
     # print('data', data)
-    
-    data['generateMoves'] = True
 
     if 'midMonthData' in data: 
         midMonthData = data['midMonthData']
