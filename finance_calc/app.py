@@ -72,7 +72,7 @@ def lambda_handler(event, context):
     moves_result = []
     
     if generateMoves:
-        mid_financial_statement_values = pd.DataFrame({})
+        mid_financial_statement_values = []
         if midMonthData:
             def process_entry(entry):
         #         Drop the 'quantity' key
@@ -94,8 +94,7 @@ def lambda_handler(event, context):
 
             mid_metrics_mapping = get_metrics_mapping(metric_mapping_data)
 
-            mid_product_cost = product_cost
-#             mid_product_cost = [process_entry(entry) for entry in product_cost]    
+            mid_product_cost = [process_entry(entry) for entry in product_cost]    
         #     return mid_product_cost
             mid_cogs_finance_mapping, mid_updated_product_costs = get_cogs_finance_mapping(mid_product_cost)
 
@@ -107,7 +106,7 @@ def lambda_handler(event, context):
             mid_financial_statement_values = []
             mid_fst_temp_values = {}
             for mid_fst_metric in finance_statement_table:
-                mid_all_calc_value, mid_fst_temp_values = get_single_fs_values(mid_fst_metric, last13CYMonthsArr, input_data_mid_mapping, metrics_mapping, company_id, unit, mid_fst_temp_values, mid_calculated_input_data, mid_required_calc_metrics_names, finance_statement_table, mid_required_calc_metrics, mid_cogs_finance_mapping,'Mid Month')
+                mid_all_calc_value, mid_fst_temp_values = get_single_fs_values(mid_fst_metric, last13CYMonthsArr, input_data_mid_mapping, mid_metrics_mapping, company_id, unit, mid_fst_temp_values, mid_calculated_input_data, mid_required_calc_metrics_names, finance_statement_table, mid_required_calc_metrics, mid_cogs_finance_mapping,'Mid Month')
                 mid_financial_statement_values += mid_all_calc_value    
 
         moves_result = growthMoves.calculate_growth(financial_statement_values, parsed_data, mid_financial_statement_values)
@@ -155,5 +154,5 @@ def lambda_handler(event, context):
 
 # lambda_handler({
 #     "bucket":"uploadfiles-jigsaw",
-#     "key":"95_dev/financeCalcDev-FinanceCalc-tUyY8ekJ6gGl/payload-1710240895329.json"
+#     "key":"26_dev/financeCalcDev-FinanceCalc-tUyY8ekJ6gGl/payload-1710320809981.json"
 # }, None)
