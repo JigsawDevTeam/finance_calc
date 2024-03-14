@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 import json
 from datetime import datetime, timedelta
+import copy
 
 def flatten_data(data, path=''):
     flattened = []
@@ -465,7 +466,7 @@ def calculate_growth(financial_statement_values, parsed_data, mid_financial_stat
 
     df_metric_mapping = pd.DataFrame(parsed_data['metricMappingData'])
     
-    financialStatementMoves = parsed_data['financialStatementMoves']
+    financialStatementMoves = copy.deepcopy(parsed_data['financialStatementMoves'])
 
     df_metric_mapping['fsId'] = df_metric_mapping['fsId'].fillna(0).astype(np.int64)
     df_metric_mapping = df_metric_mapping[['fsId','fsName','fsmId','fsmName']].rename(columns={'fsmId':'metricId'})
