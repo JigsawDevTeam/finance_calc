@@ -113,6 +113,9 @@ def lambda_handler(event, context):
                 mid_all_calc_value, mid_fst_temp_values = get_single_fs_values(mid_fst_metric, last13CYMonthsArr, input_data_mid_mapping, mid_metrics_mapping, company_id, unit, mid_fst_temp_values, mid_calculated_input_data, mid_required_calc_metrics_names, finance_statement_table, mid_required_calc_metrics, mid_cogs_finance_mapping,'Mid Month')
                 mid_financial_statement_values += mid_all_calc_value    
 
+        print('financial_statement_values',financial_statement_values)
+        print('parsed_data',parsed_data)
+        print('mid_financial_statement_values',mid_financial_statement_values)
         moves_result = growthMoves.calculate_growth(financial_statement_values, parsed_data, mid_financial_statement_values)
 
 #     return moves_result,"",""
