@@ -926,6 +926,8 @@ def calculate_growth(financial_statement_values, parsed_data, mid_financial_stat
         if label in moves:
             move.update(moves[label])
     
+    print('financialStatementMoves',financialStatementMoves)
+
     return financialStatementMoves
 
 
