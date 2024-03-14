@@ -25,6 +25,8 @@ def lambda_handler(event, context):
     except:
         data = data
     
+    data['midMonthData'] = True
+
     parsed_data = copy.deepcopy(data)
     # print('data', data)
 
@@ -81,6 +83,8 @@ def lambda_handler(event, context):
         #         Rename 'quantity' key to 'quantityMidMonth'
                 if 'quantity_mid_month' in entry:
                     entry['quantity'] = entry.pop('quantity_mid_month')
+                if 'quantityMidMonth' in entry:
+                    entry['quantity'] = entry.pop('quantityMidMonth')
                 return entry   
 
             mid_calculated_input_data = []
@@ -154,5 +158,5 @@ def lambda_handler(event, context):
 
 # lambda_handler({
 #     "bucket":"uploadfiles-jigsaw",
-#     "key":"26_dev/financeCalcDev-FinanceCalc-tUyY8ekJ6gGl/payload-1710320809981.json"
+#     "key":"26_dev/financeCalcDev-FinanceCalc-tUyY8ekJ6gGl/payload-1710326660751.json"
 # }, None)
