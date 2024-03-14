@@ -118,6 +118,8 @@ def lambda_handler(event, context):
         print('mid_financial_statement_values',mid_financial_statement_values)
         moves_result = growthMoves.calculate_growth(financial_statement_values, parsed_data, mid_financial_statement_values)
 
+        print('moves_result',moves_result)
+
 #     return moves_result,"",""
 #     return financial_statement_values,parsed_data,mid_financial_statement_values
         body = {
