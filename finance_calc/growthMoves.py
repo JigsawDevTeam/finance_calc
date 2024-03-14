@@ -363,12 +363,6 @@ def getTagline(metric: str, change: str):
         print(f'Error in getTagline: {e}')
         return ''
 
-moves = {
-            '% Growth': {},
-            'Gross Profit %': {},
-            'CM1 %' : {},
-            'CM2 %' : {}
-        }
     
 def insightDict(metric: str, insight, change, midMonthValue):
     growth_type = "MOVES_TRENDING_UP" if change == 'increase' else "MOVES_TRENDING_DOWN"
@@ -489,6 +483,12 @@ def calculate_growth(financial_statement_values, parsed_data, mid_financial_stat
     inner_this = inner_df[inner_df['monthYear'] == previous_month_year]
     inner_last = inner_df[inner_df['monthYear'] == before_previous_month_year]
     
+    moves = {
+            '% Growth': {},
+            'Gross Profit %': {},
+            'CM1 %' : {},
+            'CM2 %' : {}
+        }
     
     #Mid month data 
     if 'midMonthData' in parsed_data: 
