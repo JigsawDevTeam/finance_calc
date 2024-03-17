@@ -31,6 +31,40 @@ def custom_round(number):
         return round(rounded_number)  # Rounds to 0 decimal places if there's no decimal part
     else:
         return rounded_number
+    
+def update_fsm_name(row):
+    if row['fsName'] == 'Sales' and 'Sales' not in row['fsmName']:
+        return f"{row['fsmName']} Sales"
+    else:
+        return row['fsmName']    
+    
+def format_percentage(n):
+    """
+    Function to format a percentage such that it returns up to 1 decimal if the value
+    after the decimal is not .0; otherwise, it returns the whole number.
+    """
+    try:
+        if n % 1 == 0:
+            return int(n)
+        else:
+            return round(n, 1)
+    except:
+        return n
+    
+def extract_label(text):
+    """
+    Function to extract the label from a given text in the format:
+    'Platform [Label]' and return it as 'Platform's Label'.
+    """
+    try:
+        if '[' in text and ']' in text:
+            platform, label = text.split('[')
+            label = label.strip(']')
+            return f"{platform.strip()}'s {label}"
+        else:
+            return text
+    except:
+        return text
 
 def format_value(number):
     """
@@ -53,7 +87,7 @@ def format_value(number):
             l_value = round(number / 100000, 1)
             return f"{l_value:.0f}L" if l_value.is_integer() else f"{l_value}L"
 
-def select_top_elements_abs(data_dict):
+def select_top_elements_abs(data_dict,metric_rate_change):
     """
     Selects the top 1 or 2 elements from a dictionary based on their absolute values.
     Filters out elements with non-positive absolute values, sorts the remaining elements in descending order
@@ -65,8 +99,15 @@ def select_top_elements_abs(data_dict):
     Returns:
     - A dictionary with the selected top element(s) based on absolute values.
     """
-    # Filter out items with non-positive absolute values
-    filtered_data_dict = {k: v for k, v in data_dict.items() if abs(v) > 0}
+    
+    if metric_rate_change > 0:
+        # Filter out items with non-positive absolute values
+        filtered_data_dict = {k: v for k, v in data_dict.items() if v > 0}
+    elif metric_rate_change < 0:
+        filtered_data_dict = {k: v for k, v in data_dict.items() if v < 0}
+    else:
+        filtered_data_dict = {}
+    
 
     # Proceed only if the filtered dictionary is not empty
     if len(filtered_data_dict) > 0:
@@ -120,54 +161,56 @@ def sales_spend_move(cm2_change_pct,cm2_last,cm2_this,sales_change_pct,sales_las
     if sales_trend != spend_trend:
     
         if moveType == 'Monthly':
-            message = f"CM2% in {last_month_name} {cm2_trend} to {abs(cm2_this)}% from {abs(cm2_last)}%."
+            message = f"CM2 % in {last_month_name} {cm2_trend} to {format_percentage(cm2_this)}% from {format_percentage(cm2_last)}%."
+            summary = f"CM2 % in {last_month_name} {cm2_trend} to <b>{format_percentage(cm2_this)}%</b> from <b>{format_percentage(cm2_last)}%</b>."
             suffix = ''
         else:
-            message = f"CM2% this month {cm2_trend} to {abs(cm2_this)}% from {abs(cm2_last)}% last month."
+            message = f"CM2 % this month {cm2_trend} to {format_percentage(cm2_this)}% from {format_percentage(cm2_last)}% last month."
+            summary = f"CM2 % this month {cm2_trend} to <b>{format_percentage(cm2_this)}%</b> from <b>{format_percentage(cm2_last)}%</b> last month."
             suffix = ' at this time last month'
 
         # Conditions and messages
         if cm2_trend == "increased":
             if sales_trend == "increased" and spend_trend == "decreased":
                 # Sales Increase & Spend Decrease
-                message += f" This is due to an increase in Net Sales to {format_value(sales_this)} from {format_value(sales_last)}{suffix}, despite a {formatted_spend_change}% decrease in Ad Spend."
+                message += f"<br>This is due to an increase in Net Sales to {format_value(sales_this)} from {format_value(sales_last)}{suffix}, despite a {formatted_spend_change}% decrease in Ad Spend."
             elif sales_change > spend_change and spend_trend == "increased":
                 # Sales Increase > Spend Increase
-                message += f" Despite a {formatted_spend_change}% increase in Ad Spend, Net Sales increased by {formatted_sales_change}%."
+                message += f"<br>Despite a {formatted_spend_change}% increase in Ad Spend, Net Sales increased by {formatted_sales_change}%."
             elif sales_change < spend_change and spend_trend == "decreased":
                 # Sales decrease < Spend decrease
-                message += f" Despite a {formatted_spend_change}% decrease in Ad Spend, Net Sales decreased by {formatted_sales_change}%."
+                message += f"<br>Despite a {formatted_spend_change}% decrease in Ad Spend, Net Sales decreased by {formatted_sales_change}%."
             elif sales_trend == "increased" and spend_trend == "steady":
                 # Sales Increase & Steady Spend
-                message += f" This is due to an increase in Net Sales to {format_value(sales_this)} from {format_value(sales_last)}{suffix}, despite no increase in Ad Spend."
+                message += f"<br>This is due to an increase in Net Sales to {format_value(sales_this)} from {format_value(sales_last)}{suffix}, despite no increase in Ad Spend."
             elif sales_trend == "steady" and spend_trend == "decreased":
                 # Steady Sales & Spend Decrease
-                message += f" This is due to a decrease in Ad Spend to {format_value(spend_this)} from {format_value(spend_last)}{suffix}, despite no decrease in Net Sales."
+                message += f"<br>This is due to a decrease in Ad Spend to {format_value(spend_this)} from {format_value(spend_last)}{suffix}, despite no decrease in Net Sales."
             else:
                 message = ''
                 
         elif cm2_trend == "fell":
             if sales_trend == "decreased" and spend_trend == "increased":
                 # Sales Decrease & Spend Increase
-                message += f" This is due to a decrease in Net Sales to {format_value(sales_this)} from {format_value(sales_last)}{suffix}, despite a {formatted_spend_change}% increase in Ad Spend."
+                message += f"<br>This is due to a decrease in Net Sales to {format_value(sales_this)} from {format_value(sales_last)}{suffix}, despite a {formatted_spend_change}% increase in Ad Spend."
             elif sales_change < spend_change and spend_trend == "decreased":
                 # Sales decrease > Spend decrease
-                message += f" Despite a {formatted_spend_change}% decrease in Ad Spend, Net Sales decreased by {formatted_sales_change}%."
+                message += f"<br>Despite a {formatted_spend_change}% decrease in Ad Spend, Net Sales decreased by {formatted_sales_change}%."
             elif sales_change < spend_change and spend_trend == "increased":
                 # Sales increase < Spend increase
-                message += f" Despite a {formatted_spend_change}% increase in Ad Spend, Net Sales increased by {formatted_sales_change}%."
+                message += f"<br>Despite a {formatted_spend_change}% increase in Ad Spend, Net Sales increased by {formatted_sales_change}%."
             elif sales_trend == "steady" and spend_trend == "increased":
                 # Sales Steady & Spend Increase
-                message += f" This is due to an increase in Ad Spend to {format_value(spend_this)} from {format_value(spend_last)}{suffix}, despite no increase in Net Sales."
+                message += f"<br>This is due to an increase in Ad Spend to {format_value(spend_this)} from {format_value(spend_last)}{suffix}, despite no increase in Net Sales."
             elif sales_trend == "decreased" and spend_trend == "steady":
                 # Sales Decrease & Steady Spend
-                message += f" This is due to a decrease in Net Sales to {format_value(sales_this)} from {format_value(sales_last)}{suffix}, despite no decrease in Ad Spend."
+                message += f"<br>This is due to a decrease in Net Sales to {format_value(sales_this)} from {format_value(sales_last)}{suffix}, despite no decrease in Ad Spend."
             else:
                 message = ''
                 
-        return message
+        return message,summary 
     else:
-        return ''
+        return '',''
 
 def cogs_sales_move(gp_change_pct,gp_last,gp_this,sales_change_pct,sales_last,sales_this,cogs_change_pct,cogs_last,cogs_this,last_month_name,threshold,moveType='Monthly'):
 #     gp_change_pct = 3
@@ -203,54 +246,57 @@ def cogs_sales_move(gp_change_pct,gp_last,gp_this,sales_change_pct,sales_last,sa
 #     print('formatted_cogs_change',formatted_cogs_change)
     
     message = ''
+    summary = ''
     
     if moveType == 'Monthly':
         if abs(cogs_change_pct) >= abs(sales_change_pct): 
-            message = f"Gross Profit % in {last_month_name} {gp_trend} to {gp_this}% from {gp_last}%."
+            summary = f"Gross Profit % in {last_month_name} {gp_trend} to <b>{format_percentage(gp_this)}%</b> from <b>{format_percentage(gp_last)}%</b>."
+            message = f"Gross Profit % in {last_month_name} {gp_trend} to {format_percentage(gp_this)}% from {format_percentage(gp_last)}%."
             if gp_trend == "fell":
                 if sales_trend == "decreased" and cogs_trend == "increased":
                     # Sales Decrease & COGS Increase
-                    message += f" This is due to an increase in COGS to {format_value(cogs_this)} from {format_value(cogs_last)}, despite a {formatted_sales_change}% decrease in Net Sales. This also reduced the CM1% and CM2% for the month."
+                    message += f"<br>This is due to an increase in COGS to {format_value(cogs_this)} from {format_value(cogs_last)}, despite a {formatted_sales_change}% decrease in Net Sales.<br>This also reduced the CM1% and CM2% for the month."
                 elif sales_trend == "steady" and cogs_trend == "increased":
                     # Sales Steady & COGS Increase
-                    message += f" This is due to an increase in COGS to {format_value(cogs_this)} from {format_value(cogs_last)}, despite no increase in Net Sales. This also reduced the CM1% and CM2% for the month."
+                    message += f"<br>This is due to an increase in COGS to {format_value(cogs_this)} from {format_value(cogs_last)}, despite no increase in Net Sales.<br>This also reduced the CM1% and CM2% for the month."
                 else:
                     message = ''
             elif gp_trend == "increased":
                 if sales_trend == "increased" and cogs_trend == "decreased":
                     # Sales Increase & COGS Decrease
-                    message += f" This is due to a decrease in COGS to {format_value(cogs_this)} from {format_value(cogs_last)}, despite a {formatted_sales_change}% increase in Net Sales. This also reduced the CM1% and CM2% for the month."
+                    message += f"<br>This is due to a decrease in COGS to {format_value(cogs_this)} from {format_value(cogs_last)}, despite a {formatted_sales_change}% increase in Net Sales.<br>This also reduced the CM1% and CM2% for the month."
                 elif sales_trend == "steady" and cogs_trend == "decreased":
                     # Steady Sales & COGS Decrease
-                    message += f" This is due to a decrease in COGS to {format_value(cogs_this)} from {format_value(cogs_last)}, despite no decrease in Net Sales. This also reduced the CM1% and CM2% for the month."
+                    message += f"<br>This is due to a decrease in COGS to {format_value(cogs_this)} from {format_value(cogs_last)}, despite no decrease in Net Sales.<br>This also reduced the CM1% and CM2% for the month."
                 else:
                     message = ''
                     
     else:
         if abs(cogs_change_pct) >= abs(sales_change_pct): 
-            message = f"Gross Profit % this month {gp_trend} to {gp_this}% from {gp_last}% last month."
+            summary = f"Gross Profit % this month {gp_trend} to <b>{format_percentage(gp_this)}%</b> from <b>{format_percentage(gp_last)}%</b> last month."
+            message = f"Gross Profit % this month {gp_trend} to {format_percentage(gp_this)}% from {format_percentage(gp_last)}% last month."
             if gp_trend == "fell":
                 if sales_trend == "decreased" and cogs_trend == "increased":
                     # Sales Decrease & COGS Increase
-                    message += f" This is due to an increase in COGS to {format_value(cogs_this)} from {format_value(cogs_last)} at this time last month, despite a {formatted_sales_change}% decrease in Net Sales. This also reduced the CM1% and CM2% for the month."
+                    message += f"<br>This is due to an increase in COGS to {format_value(cogs_this)} from {format_value(cogs_last)} at this time last month, despite a {formatted_sales_change}% decrease in Net Sales.<br>This also reduced the CM1% and CM2% for the month."
                 elif sales_trend == "steady" and cogs_trend == "increased":
                     # Sales Steady & COGS Increase
-                    message += f" This is due to an increase in COGS to {format_value(cogs_this)} from {format_value(cogs_last)} at this time last month, despite no increase in Net Sales. This also reduced the CM1% and CM2% for the month."
+                    message += f"<br>This is due to an increase in COGS to {format_value(cogs_this)} from {format_value(cogs_last)} at this time last month, despite no increase in Net Sales.<br>This also reduced the CM1% and CM2% for the month."
                 else:
                     message = ''
             elif gp_trend == "increased":
                 if sales_trend == "increased" and cogs_trend == "decreased":
                     # Sales Increase & COGS Decrease
-                    message += f" This is due to a decrease in COGS to {format_value(cogs_this)} from {format_value(cogs_last)} at this time last month, despite a {formatted_sales_change}% increase in Net Sales. This also reduced the CM1% and CM2% for the month."
+                    message += f"<br>This is due to a decrease in COGS to {format_value(cogs_this)} from {format_value(cogs_last)} at this time last month, despite a {formatted_sales_change}% increase in Net Sales.<br>This also reduced the CM1% and CM2% for the month."
                 elif sales_trend == "steady" and cogs_trend == "decreased":
                     # Steady Sales & COGS Decrease
-                    message += f" This is due to a decrease in COGS to {format_value(cogs_this)} from {format_value(cogs_last)} at this time last month, despite no decrease in Net Sales. This also reduced the CM1% and CM2% for the month."
+                    message += f"<br>This is due to a decrease in COGS to {format_value(cogs_this)} from {format_value(cogs_last)} at this time last month, despite no decrease in Net Sales.<br>This also reduced the CM1% and CM2% for the month."
                 else:
                     message = ''
                 
-    return message
+    return message,summary
 
-def primary_secondary_single_move(primary_metric, primary_this, primary_last, secondary_metric, secondary_this, secondary_last, metrics_affected, last_month_name, moveType='Monthly'):
+def primary_secondary_single_move(primary_metric, primary_this, primary_last, secondary_metric, secondary_this, secondary_last, metrics_affected, last_month_name, moveType='Monthly',secondary_metrics=True):
     # Determine the direction of change for the primary metric
     if primary_this > primary_last:
         primary_change = "increased"
@@ -268,25 +314,65 @@ def primary_secondary_single_move(primary_metric, primary_this, primary_last, se
     else:
         secondary_change = "a decrease"
 
-    
-    if moveType == 'Monthly':
-        # Construct the message
-        message = f"{primary_metric} in {last_month_name} {primary_change} to {primary_this}% from {primary_last}%. " \
-                  f"This is due to {secondary_change} in {secondary_metric} to {format_value(secondary_this)} from {format_value(secondary_last)}. " 
-
-        if metrics_affected != '':
-            message += f"This also {primary_effect} the {metrics_affected} for the month."
+    if secondary_metric == 'D2C Sales':    
+        secondary_metric = 'Website Sales'
         
+    secondary_metric = extract_label(secondary_metric)
+    
+    if primary_metric == 'Sales Growth':
+        if secondary_metrics:
+            if moveType == 'Monthly':
+                # Construct the message
+                summary = f"{primary_metric} in {last_month_name} {primary_change} to <b>{format_percentage(primary_this)}%</b> from <b>{format_percentage(primary_last)}%</b>."
+                message = f"{primary_metric} in {last_month_name} {primary_change} to {format_percentage(primary_this)}% from {format_percentage(primary_last)}%." \
+                          f"<br>This is due to {secondary_change} in growth of {secondary_metric} to {format_percentage(secondary_this)}% from {format_percentage(secondary_last)}%." 
+
+                if metrics_affected != '':
+                    message += f"<br>This also {primary_effect} the {metrics_affected} for the month."
+
+            else:
+                summary = f"{primary_metric} this month {primary_change} to <b>{format_percentage(primary_this)}%</b> from <b>{format_percentage(primary_last)}%</b> last month."
+                message = f"{primary_metric} this month {primary_change} to {format_percentage(primary_this)}% from {format_percentage(primary_last)}% last month." \
+                          f"<br>This is due to {secondary_change} in growth of {secondary_metric} to {format_percentage(secondary_this)}% from {format_percentage(secondary_last)}% at this time last month." 
+
+                if metrics_affected != '':
+                        message += f"<br>This also {primary_effect} the {metrics_affected} for the month."
+        else:
+            if moveType == 'Monthly':
+                # Construct the message
+                summary = f"{primary_metric} in {last_month_name} {primary_change} to <b>{format_percentage(primary_this)}%</b> from <b>{format_percentage(primary_last)}%</b>."
+                message = f"{primary_metric} in {last_month_name} {primary_change} to {format_percentage(primary_this)}% from {format_percentage(primary_last)}%."
+
+                if metrics_affected != '':
+                    message += f"<br>This also {primary_effect} the {metrics_affected} for the month."
+
+            else:
+                summary = f"{primary_metric} this month {primary_change} to <b>{format_percentage(primary_this)}%</b> from <b>{format_percentage(primary_last)}%</b> last month."
+                message = f"{primary_metric} this month {primary_change} to {format_percentage(primary_this)}% from {format_percentage(primary_last)}% last month."
+                if metrics_affected != '':
+                        message += f"<br>This also {primary_effect} the {metrics_affected} for the month."
+    
     else:
-        message = f"{primary_metric} this month {primary_change} by {abs(primary_change_pct)}% from {primary_last}% last month. " \
-                  f"This is due to {secondary_change} in {secondary_metric} to {format_value(secondary_this)} from {format_value(secondary_last)} at this time last month. " 
+        if moveType == 'Monthly':
+            # Construct the message
+            summary = f"{primary_metric} in {last_month_name} {primary_change} to <b>{format_percentage(primary_this)}%</b> from <b>{format_percentage(primary_last)}%</b>."
+            message = f"{primary_metric} in {last_month_name} {primary_change} to {format_percentage(primary_this)}% from {format_percentage(primary_last)}%." \
+                      f"<br>This is due to {secondary_change} in {secondary_metric} to {format_value(secondary_this)} from {format_value(secondary_last)}." 
 
-        if metrics_affected != '':
-            message += f"This also {primary_effect} the {metrics_affected} for the month."
+            if metrics_affected != '':
+                message += f"<br>This also {primary_effect} the {metrics_affected} for the month."
 
-    return message
+        else:
+            summary = f"{primary_metric} this month {primary_change} to <b>{format_percentage(primary_this)}%</b> from <b>{format_percentage(primary_last)}%</b> last month."
+            message = f"{primary_metric} this month {primary_change} to {format_percentage(primary_this)}% from {format_percentage(primary_last)}% last month." \
+                      f"<br>This is due to {secondary_change} in {secondary_metric} to {format_value(secondary_this)} from {format_value(secondary_last)} at this time last month." 
 
-def primary_secondary_double_move(primary_metric, primary_this, primary_last, secondary_metric_1, secondary_this_1, secondary_last_1, secondary_metric_2, secondary_this_2, secondary_last_2, metrics_affected, last_month_name, moveType = 'Monthly'):
+            if metrics_affected != '':
+                message += f"<br>This also {primary_effect} the {metrics_affected} for the month."
+
+    return message,summary
+
+def primary_secondary_double_move(primary_metric, primary_this, primary_last, secondary_metric_1, secondary_this_1, secondary_last_1, secondary_metric_2, secondary_this_2, secondary_last_2, metrics_affected, last_month_name, moveType = 'Monthly', secondary_metrics=True):
     # Determine the direction of change for the primary metric
     if primary_this > primary_last:
         primary_change = "increased"
@@ -310,24 +396,69 @@ def primary_secondary_double_move(primary_metric, primary_this, primary_last, se
     else:
         secondary_change_2 = "a decrease"
     
-    if moveType == 'Monthly':
-        # Construct the message
-        message = f"{primary_metric} in {last_month_name} {primary_change} to {primary_this}% from {primary_last}%. " \
-                  f"This is due to {secondary_change_1} in {secondary_metric_1} to {format_value(secondary_this_1)} from {format_value(secondary_last_1)} " \
-                  f"or {secondary_change_2} in {secondary_metric_2} to {format_value(secondary_this_2)} from {format_value(secondary_last_2)}. " 
-
-        if metrics_affected != '':
-            message += f"This also {primary_effect} the {metrics_affected} for the month."  
-    else:
-        message = f"{primary_metric} this month {primary_change} by {abs(primary_change_pct)}% from {primary_last}% last month. " \
-                  f"This is due to {secondary_change_1} in {secondary_metric_1} to {format_value(secondary_this_1)} from {format_value(secondary_last_1)} at this time last month " \
-                  f"or {secondary_change_2} in {secondary_metric_2} to {format_value(secondary_this_2)} from {format_value(secondary_last_2)} at this time last month. " 
-
-        if metrics_affected != '':
-            message += f"This also {primary_effect} the {metrics_affected} for the month."
-            
+    if secondary_metric_1 == 'D2C Sales':    
+        secondary_metric_1 = 'Website Sales'
+    if secondary_metric_2 == 'D2C Sales':    
+        secondary_metric_2 = 'Website Sales'
     
-    return message
+    secondary_metric_1 = extract_label(secondary_metric_1)
+    secondary_metric_2 = extract_label(secondary_metric_2)
+    
+    if primary_metric == 'Sales Growth':
+        if secondary_metrics:
+            if moveType == 'Monthly':
+                # Construct the message
+                summary = f"{primary_metric} in {last_month_name} {primary_change} to <b>{format_percentage(primary_this)}%</b> from <b>{format_percentage(primary_last)}%</b>."
+                message = f"{primary_metric} in {last_month_name} {primary_change} to {format_percentage(primary_this)}% from {format_percentage(primary_last)}%." \
+                          f"<br>This is due to {secondary_change_1} in growth of {secondary_metric_1} to {format_percentage(secondary_this_1)}% from {format_percentage(secondary_last_1)}% " \
+                          f"or {secondary_change_2} in growth of {secondary_metric_2} to {format_percentage(secondary_this_2)}% from {format_percentage(secondary_last_2)}%." 
+
+                if metrics_affected != '':
+                    message += f"<br>This also {primary_effect} the {metrics_affected} for the month."  
+            else:
+                summary = f"{primary_metric} this month {primary_change} to <b>{format_percentage(primary_this)}%</b> from <b>{format_percentage(primary_last)}%</b> last month."
+                message = f"{primary_metric} this month {primary_change} to {format_percentage(primary_this)}% from {format_percentage(primary_last)}% last month." \
+                          f"<br>This is due to {secondary_change_1} in growth of {secondary_metric_1} to {format_percentage(secondary_this_1)}% from {format_percentage(secondary_last_1)}% at this time last month " \
+                          f"or {secondary_change_2} in growth of {secondary_metric_2} to {format_percentage(secondary_this_2)}% from {format_percentage(secondary_last_2)}% at this time last month." 
+
+                if metrics_affected != '':
+                    message += f"<br>This also {primary_effect} the {metrics_affected} for the month."
+        else:
+            if moveType == 'Monthly':
+                # Construct the message
+                summary = f"{primary_metric} in {last_month_name} {primary_change} to <b>{format_percentage(primary_this)}%</b> from <b>{format_percentage(primary_last)}%</b>."
+                message = f"{primary_metric} in {last_month_name} {primary_change} to {format_percentage(primary_this)}% from {format_percentage(primary_last)}%."
+
+                if metrics_affected != '':
+                    message += f"<br>This also {primary_effect} the {metrics_affected} for the month."  
+            else:
+                summary = f"{primary_metric} this month {primary_change} to <b>{format_percentage(primary_this)}%</b> from <b>{format_percentage(primary_last)}%</b> last month."
+                message = f"{primary_metric} this month {primary_change} to {format_percentage(primary_this)}% from {format_percentage(primary_last)}% last month."
+
+                if metrics_affected != '':
+                    message += f"<br>This also {primary_effect} the {metrics_affected} for the month."
+    
+    else:
+        if moveType == 'Monthly':
+            # Construct the message
+            summary = f"{primary_metric} in {last_month_name} {primary_change} to <b>{format_percentage(primary_this)}%</b> from <b>{format_percentage(primary_last)}%</b>."
+            message = f"{primary_metric} in {last_month_name} {primary_change} to {format_percentage(primary_this)}% from {format_percentage(primary_last)}%." \
+                      f"<br>This is due to {secondary_change_1} in {secondary_metric_1} to {format_value(secondary_this_1)} from {format_value(secondary_last_1)} " \
+                      f"or {secondary_change_2} in {secondary_metric_2} to {format_value(secondary_this_2)} from {format_value(secondary_last_2)}." 
+
+            if metrics_affected != '':
+                message += f"<br>This also {primary_effect} the {metrics_affected} for the month."  
+        else:
+            summary = f"{primary_metric} this month {primary_change} to <b>{format_percentage(primary_this)}%</b> from <b>{format_percentage(primary_last)}%</b> last month."
+            message = f"{primary_metric} this month {primary_change} to {format_percentage(primary_this)}% from {format_percentage(primary_last)}% last month." \
+                      f"<br>This is due to {secondary_change_1} in {secondary_metric_1} to {format_value(secondary_this_1)} from {format_value(secondary_last_1)} at this time last month " \
+                      f"or {secondary_change_2} in {secondary_metric_2} to {format_value(secondary_this_2)} from {format_value(secondary_last_2)} at this time last month." 
+
+            if metrics_affected != '':
+                message += f"<br>This also {primary_effect} the {metrics_affected} for the month."
+
+    
+    return message,summary
 
 
 def getTagline(metric: str, change: str):
@@ -364,18 +495,79 @@ def getTagline(metric: str, change: str):
         return ''
 
     
-def insightDict(metric: str, insight, change, midMonthValue):
+def insightDict(metric: str, insight, summary, change, midMonthValue):
     growth_type = "MOVES_TRENDING_UP" if change == 'increase' else "MOVES_TRENDING_DOWN"
 
     return {
       "insight": insight,
       "suggestion": "",
+      "summary": summary,  
       "type": growth_type,
       "tagline": getTagline(metric, change),
       "is_mid_month": midMonthValue
     }
 
-def subset_df(financial_statement_id_mapping,inner_this,inner_last,metric_name1,metric_name2):
+def growth_subset_df(financial_statement_id_mapping,inner_this,inner_last,inner_before_last,metric_name1,metric_name2,metric_rate_change=0):
+    if metric_name1 != '':
+        start_idx = financial_statement_id_mapping.index[financial_statement_id_mapping['name'] == metric_name1].tolist()[0]
+    end_idx = financial_statement_id_mapping.index[financial_statement_id_mapping['name'] == metric_name2].tolist()[0]
+
+    if metric_name1 == '':
+        df_subset = financial_statement_id_mapping.loc[0:end_idx-1]
+    else:
+        df_subset = financial_statement_id_mapping.loc[start_idx+1:end_idx-1]
+
+    ids = df_subset['financial_statement_id'].to_list()
+    
+    metric_this_df = inner_this[inner_this['fsId'].isin(ids)]
+    metric_last_df = inner_last[inner_last['fsId'].isin(ids)]
+    metric_before_last_df = inner_before_last[inner_before_last['fsId'].isin(ids)]
+
+    metric_this_sec = list(metric_this_df['fsmName'].unique())
+    metric_last_sec = list(metric_last_df['fsmName'].unique())
+    metric_before_last_sec = list(metric_before_last_df['fsmName'].unique())
+    
+    common_metric_sec = list(set(metric_this_sec) & set(metric_last_sec) & set(metric_before_last_sec))
+    
+    # Function to calculate the growth differences
+    def calculate_growth_differences(metric_this_df, metric_last_df, metric_before_last_df, common_metric_sec):
+        growth_differences = {}
+        for metric_name in common_metric_sec:
+            this_sec_value = metric_this_df[metric_this_df['fsmName'] == metric_name]['finalValue'].values[0]
+            last_sec_value = metric_last_df[metric_last_df['fsmName'] == metric_name]['finalValue'].values[0]
+            before_last_sec_value = metric_before_last_df[metric_before_last_df['fsmName'] == metric_name]['finalValue'].values[0]
+
+            growth_this_to_last = this_sec_value - last_sec_value 
+            growth_last_to_before_last = last_sec_value - before_last_sec_value 
+
+            growth_difference = growth_this_to_last - growth_last_to_before_last
+            growth_differences[metric_name] = growth_difference
+
+        return growth_differences
+
+
+    # Calculate growth differences
+    metric_difference_dict = calculate_growth_differences(metric_this_df, metric_last_df, metric_before_last_df, common_metric_sec)
+    
+    
+#     return metric_difference_dict
+    
+#     metric_merged_df = pd.merge(metric_this_df, metric_last_df, on='fsmName', suffixes=('_this', '_last'))
+
+#     # Calculate the difference in 'finalValue' for each element
+#     metric_merged_df['difference'] = metric_merged_df['finalValue_this'] - metric_merged_df['finalValue_last']
+
+#     # Convert the 'element' and 'difference' to a dictionary
+#     metric_difference_dict = pd.Series(metric_merged_df.difference.values,index=metric_merged_df.fsmName).to_dict()
+    
+    filtered_dict = {k: v for k, v in metric_difference_dict.items() if k in common_metric_sec}    
+    
+    result = select_top_elements_abs(filtered_dict,metric_rate_change)
+    
+    return result
+
+
+def subset_df(financial_statement_id_mapping,inner_this,inner_last,metric_name1,metric_name2,metric_rate_change=0):
     if metric_name1 != '':
         start_idx = financial_statement_id_mapping.index[financial_statement_id_mapping['name'] == metric_name1].tolist()[0]
     end_idx = financial_statement_id_mapping.index[financial_statement_id_mapping['name'] == metric_name2].tolist()[0]
@@ -407,7 +599,7 @@ def subset_df(financial_statement_id_mapping,inner_this,inner_last,metric_name1,
     
     filtered_dict = {k: v for k, v in metric_difference_dict.items() if k in common_metric_sec}    
     
-    result = select_top_elements_abs(filtered_dict)
+    result = select_top_elements_abs(filtered_dict,metric_rate_change)
     
     return result
 
@@ -429,9 +621,13 @@ def calculate_growth(financial_statement_values, parsed_data, mid_financial_stat
     before_previous_month_year = ((datetime.now()- timedelta(days=30)).replace(day=1) - timedelta(days=1)).replace(day=1) - timedelta(days=1)
     before_previous_month_year = before_previous_month_year.strftime('%m-%Y')
 
+    two_months_before_previous_month_year = (((datetime.now()- timedelta(days=30)).replace(day=1) - timedelta(days=1)).replace(day=1) - timedelta(days=1)).replace(day=1) - timedelta(days=1)
+    two_months_before_previous_month_year = two_months_before_previous_month_year.strftime('%m-%Y')
+    
     print("Current Month (mm-yyyy):", current_month)
     print("Previous Month-Year (mm-yyyy):", previous_month_year)
     print("Before Previous Month-Year (mm-yyyy):", before_previous_month_year)
+    print("Two Months Before Previous Month-Year (mm-yyyy):", two_months_before_previous_month_year)
     
 
 #     # Current Date in "mm-yyyy"
@@ -471,6 +667,9 @@ def calculate_growth(financial_statement_values, parsed_data, mid_financial_stat
     inner_df['isPercentage'] = inner_df['isPercentage'].fillna(0)
     inner_df = inner_df[inner_df['isPercentage'] == 0].reset_index(drop=True)
     
+    # Adding Sales to Sales Metrics 
+    inner_df['fsmName'] = inner_df.apply(update_fsm_name, axis=1)
+    
     fs_id_mapping = pd.DataFrame(parsed_data['financeStatementTable'])
 
     financial_statement_id_mapping = fs_id_mapping[['id', 'name']].rename(columns={'id':'financial_statement_id'})
@@ -482,6 +681,7 @@ def calculate_growth(financial_statement_values, parsed_data, mid_financial_stat
     
     inner_this = inner_df[inner_df['monthYear'] == previous_month_year]
     inner_last = inner_df[inner_df['monthYear'] == before_previous_month_year]
+    inner_before_last = inner_df[inner_df['monthYear'] == two_months_before_previous_month_year]
     
     moves = {
             '% Growth': {},
@@ -517,6 +717,9 @@ def calculate_growth(financial_statement_values, parsed_data, mid_financial_stat
         # Removing metrics which are percentage of other metrics (absolute value)
         mid_inner_df['isPercentage'] = mid_inner_df['isPercentage'].fillna(0)
         mid_inner_df = mid_inner_df[mid_inner_df['isPercentage'] == 0].reset_index(drop=True)
+        
+        # Adding Sales to Sales Metrics 
+        mid_inner_df['fsmName'] = mid_inner_df.apply(update_fsm_name, axis=1)
 
         mid_outer_df = mid_df_financial.merge(financial_statement_id_mapping,on='financial_statement_id',how='left')
 
@@ -526,7 +729,8 @@ def calculate_growth(financial_statement_values, parsed_data, mid_financial_stat
 
         mid_inner_this = mid_inner_df[mid_inner_df['monthYear'] == previous_month_year]
         mid_inner_last = mid_inner_df[mid_inner_df['monthYear'] == before_previous_month_year]
-    
+        mid_inner_before_last = mid_inner_df[mid_inner_df['monthYear'] == two_months_before_previous_month_year]
+        
     
     # Last month name for moves
     month_string = previous_month_year
@@ -539,33 +743,56 @@ def calculate_growth(financial_statement_values, parsed_data, mid_financial_stat
         if not midMonthData:
             # % Growth Move
             primary_metric = "% Growth"
+            primary_metric_name = "Sales Growth"
             primary_this = valuegetter(outer_this,'name',primary_metric,'value') 
             primary_last = valuegetter(outer_last,'name',primary_metric,'value') 
 
             growth_rate_change = getPerChange(primary_last, primary_this)
+            total_sales_channels = (inner_df[inner_df['fsName'] == 'Sales']).groupby('fsmName')['finalValue'].sum().reset_index()
+            count_total_sales_channels = total_sales_channels[total_sales_channels['finalValue'] > 0]['fsmName'].count()
+
+            if count_total_sales_channels > 1:
+                secondary_metrics_value = True
+            else:
+                secondary_metrics_value = False
 
             if abs(growth_rate_change) >= growth_threshold:
 
-                result_growth = subset_df(financial_statement_id_mapping,inner_this,inner_last,'','% Growth')
+                result_growth = growth_subset_df(financial_statement_id_mapping,inner_this,inner_last,inner_before_last,'','% Growth',growth_rate_change)
                 if len(result_growth) == 1:
                     secondary_metric = list(result_growth.keys())[0]
-                    secondary_this = inner_this[inner_this['fsmName'] == secondary_metric]['finalValue'].iloc[0]
-                    secondary_last = inner_last[inner_last['fsmName'] == secondary_metric]['finalValue'].iloc[0]
+                    secondary_this_value = valuegetter(inner_this,'fsmName',secondary_metric,'finalValue')  
+                    secondary_last_value = valuegetter(inner_last,'fsmName',secondary_metric,'finalValue')  
+                    secondary_before_last_value = valuegetter(inner_before_last,'fsmName',secondary_metric,'finalValue') 
+
+                    secondary_this = getPerChange(secondary_last_value, secondary_this_value) 
+                    secondary_last = getPerChange(secondary_before_last_value, secondary_last_value) 
+
                     mt_effected = 'Gross Profit %, CM1 % and CM2 %'        
 
-                    percentage_growth_move = primary_secondary_single_move(primary_metric, primary_this, primary_last, secondary_metric, secondary_this, secondary_last, mt_effected, last_month_name)
+                    percentage_growth_move, summary_growth_move = primary_secondary_single_move(primary_metric_name, primary_this, primary_last, secondary_metric, secondary_this, secondary_last, mt_effected, last_month_name,secondary_metrics=secondary_metrics_value)
         #             print(percentage_growth_move)
 
                 if len(result_growth) == 2:
                     secondary_metric_1 = list(result_growth.keys())[0]
-                    secondary_this_1 = inner_this[inner_this['fsmName'] == secondary_metric_1]['finalValue'].iloc[0]
-                    secondary_last_1 = inner_last[inner_last['fsmName'] == secondary_metric_1]['finalValue'].iloc[0]
+                    secondary_this_value_1 = valuegetter(inner_this,'fsmName',secondary_metric_1,'finalValue')  
+                    secondary_last_value_1 = valuegetter(inner_last,'fsmName',secondary_metric_1,'finalValue')  
+                    secondary_before_last_value_1 = valuegetter(inner_before_last,'fsmName',secondary_metric_1,'finalValue') 
+
+                    secondary_this_1 = getPerChange(secondary_last_value_1, secondary_this_value_1) 
+                    secondary_last_1 = getPerChange(secondary_before_last_value_1, secondary_last_value_1)
+
                     secondary_metric_2 = list(result_growth.keys())[1]
-                    secondary_this_2 = inner_this[inner_this['fsmName'] == secondary_metric_2]['finalValue'].iloc[0]
-                    secondary_last_2 = inner_last[inner_last['fsmName'] == secondary_metric_2]['finalValue'].iloc[0]
+                    secondary_this_value_2 = valuegetter(inner_this,'fsmName',secondary_metric_2,'finalValue')  
+                    secondary_last_value_2 = valuegetter(inner_last,'fsmName',secondary_metric_2,'finalValue')  
+                    secondary_before_last_value_2 = valuegetter(inner_before_last,'fsmName',secondary_metric_2,'finalValue')
+
+                    secondary_this_2 = getPerChange(secondary_last_value_2, secondary_this_value_2) 
+                    secondary_last_2 = getPerChange(secondary_before_last_value_2, secondary_last_value_2)
+
                     mt_effected = 'Gross Profit %, CM1 % and CM2 %'
 
-                    percentage_growth_move = primary_secondary_double_move(primary_metric, primary_this, primary_last, secondary_metric_1, secondary_this_1, secondary_last_1, secondary_metric_2, secondary_this_2, secondary_last_2, mt_effected, last_month_name)
+                    percentage_growth_move, summary_growth_move = primary_secondary_double_move(primary_metric_name, primary_this, primary_last, secondary_metric_1, secondary_this_1, secondary_last_1, secondary_metric_2, secondary_this_2, secondary_last_2, mt_effected, last_month_name,secondary_metrics=secondary_metrics_value)
         #             print(percentage_growth_move)
 
                 growth_move_direction = 'increase' if growth_rate_change > 0 else 'decrease'
@@ -574,40 +801,66 @@ def calculate_growth(financial_statement_values, parsed_data, mid_financial_stat
                     moves['% Growth'] = insightDict(
                                     '% Growth', 
                                     percentage_growth_move, 
+                                    summary_growth_move, 
                                     growth_move_direction,
                                     0
                                 )
-            
+
         if midMonthData:
             # Mid Monthly Move
             primary_metric = "% Growth"
+            primary_metric_name = "Sales Growth"
             primary_this = valuegetter(mid_outer_this,'name',primary_metric,'value') 
             primary_last = valuegetter(outer_this,'name',primary_metric,'value') 
 
             growth_rate_change = getPerChange(primary_last, primary_this)
+            total_sales_channels = (inner_df[inner_df['fsName'] == 'Sales']).groupby('fsmName')['finalValue'].sum().reset_index()
+            count_total_sales_channels = total_sales_channels[total_sales_channels['finalValue'] > 0]['fsmName'].count()
+
+            if count_total_sales_channels > 1:
+                secondary_metrics_value = True
+            else:
+                secondary_metrics_value = False
 
             if abs(growth_rate_change) >= growth_threshold:
 
-                result_growth = subset_df(financial_statement_id_mapping,mid_inner_this,mid_inner_last,'','% Growth')
+                result_growth = growth_subset_df(financial_statement_id_mapping,mid_inner_this,mid_inner_last,inner_before_last,'','% Growth',growth_rate_change)
                 if len(result_growth) == 1:
                     secondary_metric = list(result_growth.keys())[0]
-                    secondary_this = valuegetter(mid_inner_this,'fsmName',secondary_metric,'finalValue')
-                    secondary_last = valuegetter(mid_inner_last,'fsmName',secondary_metric,'finalValue')
+
+                    secondary_this_value = valuegetter(mid_inner_this,'fsmName',secondary_metric,'finalValue')  
+                    secondary_last_value = valuegetter(mid_inner_last,'fsmName',secondary_metric,'finalValue')  
+                    secondary_before_last_value = valuegetter(mid_inner_before_last,'fsmName',secondary_metric,'finalValue') 
+
+                    secondary_this = getPerChange(secondary_last_value, secondary_this_value) 
+                    secondary_last = getPerChange(secondary_before_last_value, secondary_last_value) 
+
                     mt_effected = 'Gross Profit %, CM1 % and CM2 %'        
 
-                    mid_percentage_growth_move = primary_secondary_single_move(primary_metric, primary_this, primary_last, secondary_metric, secondary_this, secondary_last, mt_effected, last_month_name,moveType='MidMonth')
+                    mid_percentage_growth_move, mid_summary_growth_move = primary_secondary_single_move(primary_metric_name, primary_this, primary_last, secondary_metric, secondary_this, secondary_last, mt_effected, last_month_name,moveType='MidMonth',secondary_metrics=secondary_metrics_value)
                 #             print(percentage_growth_move)
 
                 if len(result_growth) == 2:
                     secondary_metric_1 = list(result_growth.keys())[0]
-                    secondary_this_1 = valuegetter(mid_inner_this,'fsmName',secondary_metric_1,'finalValue') 
-                    secondary_last_1 = valuegetter(mid_inner_last,'fsmName',secondary_metric_1,'finalValue')
+                    secondary_this_value_1 = valuegetter(mid_inner_this,'fsmName',secondary_metric_1,'finalValue')  
+                    secondary_last_value_1 = valuegetter(mid_inner_last,'fsmName',secondary_metric_1,'finalValue')  
+                    secondary_before_last_value_1 = valuegetter(mid_inner_before_last,'fsmName',secondary_metric_1,'finalValue') 
+
+                    secondary_this_1 = getPerChange(secondary_last_value_1, secondary_this_value_1) 
+                    secondary_last_1 = getPerChange(secondary_before_last_value_1, secondary_last_value_1)
+
                     secondary_metric_2 = list(result_growth.keys())[1]
-                    secondary_this_2 = valuegetter(mid_inner_this,'fsmName',secondary_metric_2,'finalValue')
-                    secondary_last_2 = valuegetter(mid_inner_last,'fsmName',secondary_metric_2,'finalValue')
+                    secondary_this_value_2 = valuegetter(mid_inner_this,'fsmName',secondary_metric_2,'finalValue')  
+                    secondary_last_value_2 = valuegetter(mid_inner_last,'fsmName',secondary_metric_2,'finalValue')  
+                    secondary_before_last_value_2 = valuegetter(mid_inner_before_last,'fsmName',secondary_metric_2,'finalValue')
+
+                    secondary_this_2 = getPerChange(secondary_last_value_2, secondary_this_value_2) 
+                    secondary_last_2 = getPerChange(secondary_before_last_value_2, secondary_last_value_2)
+
+
                     mt_effected = 'Gross Profit %, CM1 % and CM2 %'
 
-                    mid_percentage_growth_move = primary_secondary_double_move(primary_metric, primary_this, primary_last, secondary_metric_1, secondary_this_1, secondary_last_1, secondary_metric_2, secondary_this_2, secondary_last_2, mt_effected, last_month_name,moveType='MidMonth')
+                    mid_percentage_growth_move, mid_summary_growth_move = primary_secondary_double_move(primary_metric_name, primary_this, primary_last, secondary_metric_1, secondary_this_1, secondary_last_1, secondary_metric_2, secondary_this_2, secondary_last_2, mt_effected, last_month_name,moveType='MidMonth',secondary_metrics=secondary_metrics_value)
                 #             print(percentage_growth_move)
 
                 mid_growth_move_direction = 'increase' if growth_rate_change > 0 else 'decrease'
@@ -616,10 +869,11 @@ def calculate_growth(financial_statement_values, parsed_data, mid_financial_stat
                     moves['% Growth'] = insightDict(
                                 '% Growth', 
                                 mid_percentage_growth_move, 
+                                mid_summary_growth_move, 
                                 mid_growth_move_direction,
                                 1
                             )
-            
+
     except Exception as e:
         print(f'Error in % Growth Move: {e}')
     
@@ -643,7 +897,7 @@ def calculate_growth(financial_statement_values, parsed_data, mid_financial_stat
 
             if abs(gp_change_pct) >= gp_threshold:
 
-                gp_percentage_move = cogs_sales_move(gp_change_pct,gp_last,gp_this,sales_change_pct,sales_last,sales_this,cogs_change_pct,cogs_last,cogs_this,last_month_name,5)
+                gp_percentage_move, gp_summary_move = cogs_sales_move(gp_change_pct,gp_last,gp_this,sales_change_pct,sales_last,sales_this,cogs_change_pct,cogs_last,cogs_this,last_month_name,5)
                 if gp_percentage_move != '':
 
                     gp_move_direction = 'increase' if gp_change_pct > 0 else 'decrease'
@@ -651,6 +905,7 @@ def calculate_growth(financial_statement_values, parsed_data, mid_financial_stat
                     moves['Gross Profit %'] = insightDict(
                                     'Gross Profit %', 
                                     gp_percentage_move, 
+                                    gp_summary_move,
                                     gp_move_direction,
                                     0
                                 )
@@ -673,7 +928,7 @@ def calculate_growth(financial_statement_values, parsed_data, mid_financial_stat
 
             if abs(gp_change_pct) >= gp_threshold:
 
-                gp_percentage_move = cogs_sales_move(gp_change_pct,gp_last,gp_this,sales_change_pct,sales_last,sales_this,cogs_change_pct,cogs_last,cogs_this,last_month_name,5,moveType='Mid Month')
+                gp_percentage_move, gp_summary_move = cogs_sales_move(gp_change_pct,gp_last,gp_this,sales_change_pct,sales_last,sales_this,cogs_change_pct,cogs_last,cogs_this,last_month_name,5,moveType='Mid Month')
                 if gp_percentage_move != '':
 
                     gp_move_direction = 'increase' if gp_change_pct > 0 else 'decrease'
@@ -681,6 +936,7 @@ def calculate_growth(financial_statement_values, parsed_data, mid_financial_stat
                     moves['Gross Profit %'] = insightDict(
                                     'Gross Profit %', 
                                     gp_percentage_move, 
+                                    gp_summary_move,
                                     gp_move_direction,
                                     1
                                 )
@@ -698,14 +954,14 @@ def calculate_growth(financial_statement_values, parsed_data, mid_financial_stat
 
             if abs(cm1_rate_change) >= cm1_threshold:
 
-                result_cm_1 = subset_df(financial_statement_id_mapping,inner_this,inner_last,'Gross Profit %','CM1')
+                result_cm_1 = subset_df(financial_statement_id_mapping,inner_this,inner_last,'Gross Profit %','CM1',cm1_rate_change)
                 if len(result_cm_1) == 1:
                     secondary_metric = list(result_cm_1.keys())[0]
                     secondary_this = inner_this[inner_this['fsmName'] == secondary_metric]['finalValue'].iloc[0]
                     secondary_last = inner_last[inner_last['fsmName'] == secondary_metric]['finalValue'].iloc[0]
                     mt_effected = 'CM2 %'
 
-                    percentage_cm1_move = primary_secondary_single_move(primary_metric, primary_this, primary_last, secondary_metric, secondary_this, secondary_last, mt_effected, last_month_name)
+                    percentage_cm1_move, summary_cm1_move = primary_secondary_single_move(primary_metric, primary_this, primary_last, secondary_metric, secondary_this, secondary_last, mt_effected, last_month_name)
         #             print(percentage_cm1_move)
 
                 if len(result_cm_1) == 2: 
@@ -717,7 +973,7 @@ def calculate_growth(financial_statement_values, parsed_data, mid_financial_stat
                     secondary_last_2 = inner_last[inner_last['fsmName'] == secondary_metric_2]['finalValue'].iloc[0]
                     mt_effected = 'CM2 %'
 
-                    percentage_cm1_move = primary_secondary_double_move(primary_metric, primary_this, primary_last, secondary_metric_1, secondary_this_1, secondary_last_1, secondary_metric_2, secondary_this_2, secondary_last_2, mt_effected, last_month_name)
+                    percentage_cm1_move, summary_cm1_move = primary_secondary_double_move(primary_metric, primary_this, primary_last, secondary_metric_1, secondary_this_1, secondary_last_1, secondary_metric_2, secondary_this_2, secondary_last_2, mt_effected, last_month_name)
         #             print(percentage_cm1_move)
 
                 cm1_move_direction = 'increase' if cm1_rate_change > 0 else 'decrease'
@@ -726,6 +982,7 @@ def calculate_growth(financial_statement_values, parsed_data, mid_financial_stat
                     moves['CM1 %'] = insightDict(
                                     'CM1 %', 
                                     percentage_cm1_move, 
+                                    summary_cm1_move,
                                     cm1_move_direction,
                                     0
                                 )
@@ -741,14 +998,14 @@ def calculate_growth(financial_statement_values, parsed_data, mid_financial_stat
             
             if abs(cm1_rate_change) >= cm1_threshold:
 
-                result_cm1 = subset_df(financial_statement_id_mapping,mid_inner_this,mid_inner_last,'Gross Profit %','CM1')
+                result_cm1 = subset_df(financial_statement_id_mapping,mid_inner_this,mid_inner_last,'Gross Profit %','CM1',cm1_rate_change)
                 if len(result_cm1) == 1:
                     secondary_metric = list(result_cm1.keys())[0]
                     secondary_this = valuegetter(mid_inner_this,'fsmName',secondary_metric,'finalValue')
                     secondary_last = valuegetter(mid_inner_last,'fsmName',secondary_metric,'finalValue')
                     mt_effected = 'CM2 %'        
 
-                    mid_percentage_cm1_move = primary_secondary_single_move(primary_metric, primary_this, primary_last, secondary_metric, secondary_this, secondary_last, mt_effected, last_month_name,moveType='MidMonth')
+                    mid_percentage_cm1_move, mid_summary_cm1_move  = primary_secondary_single_move(primary_metric, primary_this, primary_last, secondary_metric, secondary_this, secondary_last, mt_effected, last_month_name,moveType='MidMonth')
 
                 if len(result_cm1) == 2:
                     secondary_metric_1 = list(result_cm1.keys())[0]
@@ -759,7 +1016,7 @@ def calculate_growth(financial_statement_values, parsed_data, mid_financial_stat
                     secondary_last_2 = valuegetter(mid_inner_last,'fsmName',secondary_metric_2,'finalValue')
                     mt_effected = 'CM2 %'
 
-                    mid_percentage_cm1_move = primary_secondary_double_move(primary_metric, primary_this, primary_last, secondary_metric_1, secondary_this_1, secondary_last_1, secondary_metric_2, secondary_this_2, secondary_last_2, mt_effected, last_month_name,moveType='MidMonth')
+                    mid_percentage_cm1_move, mid_summary_cm1_move  = primary_secondary_double_move(primary_metric, primary_this, primary_last, secondary_metric_1, secondary_this_1, secondary_last_1, secondary_metric_2, secondary_this_2, secondary_last_2, mt_effected, last_month_name,moveType='MidMonth')
 
                 mid_cm1_move_direction = 'increase' if cm1_rate_change > 0 else 'decrease'
                 
@@ -767,6 +1024,7 @@ def calculate_growth(financial_statement_values, parsed_data, mid_financial_stat
                     moves['CM1 %'] = insightDict(
                                 'CM1 %', 
                                 mid_percentage_cm1_move, 
+                                mid_summary_cm1_move,
                                 mid_cm1_move_direction,
                                 1
                             )            
@@ -801,13 +1059,14 @@ def calculate_growth(financial_statement_values, parsed_data, mid_financial_stat
 
                 if abs(cm2_change_pct) >= cm2_threshold:
 
-                    cm2_percentage_move = sales_spend_move(cm2_change_pct,cm2_last,cm2_this,sales_change_pct,sales_last,sales_this,spend_change_pct,spend_last,spend_this,last_month_name,5)
+                    cm2_percentage_move, cm2_summary_move = sales_spend_move(cm2_change_pct,cm2_last,cm2_this,sales_change_pct,sales_last,sales_this,spend_change_pct,spend_last,spend_this,last_month_name,5)
                     if cm2_percentage_move != '':
                         cm2_move_direction = 'increase' if cm2_change_pct > 0 else 'decrease'
 
                         moves['CM2 %'] = insightDict(
                                         'CM2 %', 
                                         cm2_percentage_move, 
+                                        cm2_summary_move, 
                                         cm2_move_direction,
                                         0
                                     )
@@ -820,14 +1079,14 @@ def calculate_growth(financial_statement_values, parsed_data, mid_financial_stat
 
                 if abs(cm2_rate_change) >= cm2_threshold:
 
-                    result_cm_2 = subset_df(financial_statement_id_mapping,inner_this,inner_last,'CM1 %','CM2')
+                    result_cm_2 = subset_df(financial_statement_id_mapping,inner_this,inner_last,'CM1 %','CM2',cm2_rate_change)
                     if len(result_cm_2) == 1:
                         secondary_metric = list(result_cm_2.keys())[0]
                         secondary_this = inner_this[inner_this['fsmName'] == secondary_metric]['finalValue'].iloc[0]
                         secondary_last = inner_last[inner_last['fsmName'] == secondary_metric]['finalValue'].iloc[0]
                         mt_effected = ''
 
-                        percentage_cm2_move = primary_secondary_single_move(primary_metric, primary_this, primary_last, secondary_metric, secondary_this, secondary_last, mt_effected, last_month_name)
+                        percentage_cm2_move, summary_cm2_move = primary_secondary_single_move(primary_metric, primary_this, primary_last, secondary_metric, secondary_this, secondary_last, mt_effected, last_month_name)
 
                     if len(result_cm_2) == 2: 
                         secondary_metric_1 = list(result_cm_2.keys())[0]
@@ -838,14 +1097,15 @@ def calculate_growth(financial_statement_values, parsed_data, mid_financial_stat
                         secondary_last_2 = inner_last[inner_last['fsmName'] == secondary_metric_2]['finalValue'].iloc[0]
                         mt_effected = ''
 
-                        percentage_cm2_move = primary_secondary_double_move(primary_metric, primary_this, primary_last, secondary_metric_1, secondary_this_1, secondary_last_1, secondary_metric_2, secondary_this_2, secondary_last_2, mt_effected, last_month_name)
+                        percentage_cm2_move, summary_cm2_move = primary_secondary_double_move(primary_metric, primary_this, primary_last, secondary_metric_1, secondary_this_1, secondary_last_1, secondary_metric_2, secondary_this_2, secondary_last_2, mt_effected, last_month_name)
 
                     cm2_move_direction = 'increase' if cm2_rate_change > 0 else 'decrease'
 
                     if (len(result_cm_2) == 1) or (len(result_cm_2) == 2):
                         moves['CM2 %'] = insightDict(
                                         'CM2 %', 
-                                        percentage_cm2_move, 
+                                        percentage_cm2_move,
+                                        summary_cm2_move,
                                         cm2_move_direction,
                                         0
                                     )
@@ -870,13 +1130,14 @@ def calculate_growth(financial_statement_values, parsed_data, mid_financial_stat
 
                 if abs(cm2_change_pct) >= cm2_threshold:
 
-                    cm2_percentage_move = sales_spend_move(cm2_change_pct,cm2_last,cm2_this,sales_change_pct,sales_last,sales_this,spend_change_pct,spend_last,spend_this,last_month_name,5,moveType='Mid Month')
+                    cm2_percentage_move, cm2_summary_move = sales_spend_move(cm2_change_pct,cm2_last,cm2_this,sales_change_pct,sales_last,sales_this,spend_change_pct,spend_last,spend_this,last_month_name,5,moveType='Mid Month')
                     if cm2_percentage_move != '':
                         cm2_move_direction = 'increase' if cm2_change_pct > 0 else 'decrease'
 
                         moves['CM2 %'] = insightDict(
                                         'CM2 %', 
                                         cm2_percentage_move, 
+                                        cm2_summary_move,
                                         cm2_move_direction,
                                         1
                                     )
@@ -889,14 +1150,14 @@ def calculate_growth(financial_statement_values, parsed_data, mid_financial_stat
 
                 if abs(cm2_rate_change) >= cm2_threshold:
 
-                    result_cm2 = subset_df(financial_statement_id_mapping,mid_inner_this,mid_inner_last,'CM1 %','CM2')
+                    result_cm2 = subset_df(financial_statement_id_mapping,mid_inner_this,mid_inner_last,'CM1 %','CM2',cm2_rate_change)
                     if len(result_cm2) == 1:
                         secondary_metric = list(result_cm2.keys())[0]
                         secondary_this = valuegetter(mid_inner_this,'fsmName',secondary_metric,'finalValue')
                         secondary_last = valuegetter(mid_inner_last,'fsmName',secondary_metric,'finalValue')
                         mt_effected = 'CM2 %'        
 
-                        mid_percentage_cm2_move = primary_secondary_single_move(primary_metric, primary_this, primary_last, secondary_metric, secondary_this, secondary_last, mt_effected, last_month_name,moveType='MidMonth')
+                        mid_percentage_cm2_move, mid_summary_cm2_move = primary_secondary_single_move(primary_metric, primary_this, primary_last, secondary_metric, secondary_this, secondary_last, mt_effected, last_month_name,moveType='MidMonth')
 
                     if len(result_cm2) == 2:
                         secondary_metric_1 = list(result_cm2.keys())[0]
@@ -907,7 +1168,7 @@ def calculate_growth(financial_statement_values, parsed_data, mid_financial_stat
                         secondary_last_2 = valuegetter(mid_inner_last,'fsmName',secondary_metric_2,'finalValue')
                         mt_effected = ''
 
-                        mid_percentage_cm2_move = primary_secondary_double_move(primary_metric, primary_this, primary_last, secondary_metric_1, secondary_this_1, secondary_last_1, secondary_metric_2, secondary_this_2, secondary_last_2, mt_effected, last_month_name,moveType='MidMonth')
+                        mid_percentage_cm2_move, mid_summary_cm2_move = primary_secondary_double_move(primary_metric, primary_this, primary_last, secondary_metric_1, secondary_this_1, secondary_last_1, secondary_metric_2, secondary_this_2, secondary_last_2, mt_effected, last_month_name,moveType='MidMonth')
 
                     mid_cm2_move_direction = 'increase' if cm2_rate_change > 0 else 'decrease'
 
@@ -915,6 +1176,7 @@ def calculate_growth(financial_statement_values, parsed_data, mid_financial_stat
                         moves['CM2 %'] = insightDict(
                                     'CM2 %', 
                                     mid_percentage_cm2_move, 
+                                    mid_summary_cm2_move,
                                     mid_cm2_move_direction,
                                     1
                                 )            
@@ -926,26 +1188,5 @@ def calculate_growth(financial_statement_values, parsed_data, mid_financial_stat
         label = move["label"]
         if label in moves:
             move.update(moves[label])
-    
-    print('financialStatementMoves',financialStatementMoves)
 
     return financialStatementMoves
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
