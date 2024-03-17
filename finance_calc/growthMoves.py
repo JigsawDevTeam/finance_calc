@@ -149,15 +149,8 @@ def sales_spend_move(cm2_change_pct,cm2_last,cm2_this,sales_change_pct,sales_las
 #     print('sales_trend',sales_trend)
 #     print('spend_trend',spend_trend)
 
-    try:
-        formatted_sales_change = f"{abs(sales_change_pct):.1f}" if not (sales_change_pct).is_integer() else f"{abs(sales_change_pct):.0f}"
-    except:
-        formatted_sales_change = f"{abs(sales_change_pct):.1f}" 
-    try:
-        formatted_spend_change = f"{abs(spend_change_pct):.1f}" if not (spend_change_pct).is_integer() else f"{abs(spend_change_pct):.0f}"
-    except:
-        formatted_spend_change = f"{abs(spend_change_pct):.1f}"
-        
+    formatted_sales_change = f"{format_percentage(sales_change_pct)}"
+    formatted_spend_change = f"{format_percentage(spend_change_pct)}"
     
     if sales_trend != spend_trend:
     
