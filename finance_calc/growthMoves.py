@@ -44,6 +44,7 @@ def format_percentage(n):
     after the decimal is not .0; otherwise, it returns the whole number.
     """
     try:
+        n = round(n,1)
         if n % 1 == 0:
             return int(n)
         else:
@@ -320,6 +321,10 @@ def primary_secondary_single_move(primary_metric, primary_this, primary_last, se
     secondary_metric = extract_label(secondary_metric)
     
     if primary_metric == 'Sales Growth':
+        if (primary_change == "increased" and secondary_change == "an increase") or (primary_change == "fell" and secondary_change == "a decrease"):
+            pass
+        else:
+            secondary_metrics = False
         if secondary_metrics:
             if moveType == 'Monthly':
                 # Construct the message
@@ -405,6 +410,11 @@ def primary_secondary_double_move(primary_metric, primary_this, primary_last, se
     secondary_metric_2 = extract_label(secondary_metric_2)
     
     if primary_metric == 'Sales Growth':
+        if (primary_change == "increased" and secondary_change_1 == "an increase" and secondary_change_2 == "an increase") or (primary_change == "fell" and secondary_change_1 == "a decrease" and secondary_change_2 == "a decrease"):
+            pass
+        else:
+            secondary_metrics = False
+        
         if secondary_metrics:
             if moveType == 'Monthly':
                 # Construct the message
@@ -795,7 +805,7 @@ def calculate_growth(financial_statement_values, parsed_data, mid_financial_stat
                     percentage_growth_move, summary_growth_move = primary_secondary_double_move(primary_metric_name, primary_this, primary_last, secondary_metric_1, secondary_this_1, secondary_last_1, secondary_metric_2, secondary_this_2, secondary_last_2, mt_effected, last_month_name,secondary_metrics=secondary_metrics_value)
         #             print(percentage_growth_move)
 
-                growth_move_direction = 'increase' if growth_rate_change > 0 else 'decrease'
+                growth_move_direction = 'increase' if primary_this > primary_last else 'decrease'
 
                 if (len(result_growth) == 1) or (len(result_growth) == 2):
                     moves['% Growth'] = insightDict(
@@ -814,6 +824,7 @@ def calculate_growth(financial_statement_values, parsed_data, mid_financial_stat
             primary_last = valuegetter(outer_this,'name',primary_metric,'value') 
 
             growth_rate_change = getPerChange(primary_last, primary_this)
+            
             total_sales_channels = (inner_df[inner_df['fsName'] == 'Sales']).groupby('fsmName')['finalValue'].sum().reset_index()
             count_total_sales_channels = total_sales_channels[total_sales_channels['finalValue'] > 0]['fsmName'].count()
 
@@ -863,7 +874,7 @@ def calculate_growth(financial_statement_values, parsed_data, mid_financial_stat
                     mid_percentage_growth_move, mid_summary_growth_move = primary_secondary_double_move(primary_metric_name, primary_this, primary_last, secondary_metric_1, secondary_this_1, secondary_last_1, secondary_metric_2, secondary_this_2, secondary_last_2, mt_effected, last_month_name,moveType='MidMonth',secondary_metrics=secondary_metrics_value)
                 #             print(percentage_growth_move)
 
-                mid_growth_move_direction = 'increase' if growth_rate_change > 0 else 'decrease'
+                mid_growth_move_direction = 'increase' if primary_this > primary_last else 'decrease'
 
                 if (len(result_growth) == 1) or (len(result_growth) == 2):
                     moves['% Growth'] = insightDict(
@@ -900,7 +911,7 @@ def calculate_growth(financial_statement_values, parsed_data, mid_financial_stat
                 gp_percentage_move, gp_summary_move = cogs_sales_move(gp_change_pct,gp_last,gp_this,sales_change_pct,sales_last,sales_this,cogs_change_pct,cogs_last,cogs_this,last_month_name,5)
                 if gp_percentage_move != '':
 
-                    gp_move_direction = 'increase' if gp_change_pct > 0 else 'decrease'
+                    gp_move_direction = 'increase' if gp_this > gp_last else 'decrease'
 
                     moves['Gross Profit %'] = insightDict(
                                     'Gross Profit %', 
@@ -931,7 +942,7 @@ def calculate_growth(financial_statement_values, parsed_data, mid_financial_stat
                 gp_percentage_move, gp_summary_move = cogs_sales_move(gp_change_pct,gp_last,gp_this,sales_change_pct,sales_last,sales_this,cogs_change_pct,cogs_last,cogs_this,last_month_name,5,moveType='Mid Month')
                 if gp_percentage_move != '':
 
-                    gp_move_direction = 'increase' if gp_change_pct > 0 else 'decrease'
+                    gp_move_direction = 'increase' if gp_this > gp_last else 'decrease'
 
                     moves['Gross Profit %'] = insightDict(
                                     'Gross Profit %', 
@@ -976,7 +987,7 @@ def calculate_growth(financial_statement_values, parsed_data, mid_financial_stat
                     percentage_cm1_move, summary_cm1_move = primary_secondary_double_move(primary_metric, primary_this, primary_last, secondary_metric_1, secondary_this_1, secondary_last_1, secondary_metric_2, secondary_this_2, secondary_last_2, mt_effected, last_month_name)
         #             print(percentage_cm1_move)
 
-                cm1_move_direction = 'increase' if cm1_rate_change > 0 else 'decrease'
+                cm1_move_direction = 'increase' if primary_this > primary_last else 'decrease'
 
                 if (len(result_cm_1) == 1) or (len(result_cm_1) == 2):
                     moves['CM1 %'] = insightDict(
@@ -1018,7 +1029,7 @@ def calculate_growth(financial_statement_values, parsed_data, mid_financial_stat
 
                     mid_percentage_cm1_move, mid_summary_cm1_move  = primary_secondary_double_move(primary_metric, primary_this, primary_last, secondary_metric_1, secondary_this_1, secondary_last_1, secondary_metric_2, secondary_this_2, secondary_last_2, mt_effected, last_month_name,moveType='MidMonth')
 
-                mid_cm1_move_direction = 'increase' if cm1_rate_change > 0 else 'decrease'
+                mid_cm1_move_direction = 'increase' if primary_this > primary_last else 'decrease'
                 
                 if (len(result_cm1) == 1) or (len(result_cm1) == 2):
                     moves['CM1 %'] = insightDict(
@@ -1061,7 +1072,7 @@ def calculate_growth(financial_statement_values, parsed_data, mid_financial_stat
 
                     cm2_percentage_move, cm2_summary_move = sales_spend_move(cm2_change_pct,cm2_last,cm2_this,sales_change_pct,sales_last,sales_this,spend_change_pct,spend_last,spend_this,last_month_name,5)
                     if cm2_percentage_move != '':
-                        cm2_move_direction = 'increase' if cm2_change_pct > 0 else 'decrease'
+                        cm2_move_direction = 'increase' if cm2_this > cm2_last else 'decrease'
 
                         moves['CM2 %'] = insightDict(
                                         'CM2 %', 
@@ -1099,7 +1110,7 @@ def calculate_growth(financial_statement_values, parsed_data, mid_financial_stat
 
                         percentage_cm2_move, summary_cm2_move = primary_secondary_double_move(primary_metric, primary_this, primary_last, secondary_metric_1, secondary_this_1, secondary_last_1, secondary_metric_2, secondary_this_2, secondary_last_2, mt_effected, last_month_name)
 
-                    cm2_move_direction = 'increase' if cm2_rate_change > 0 else 'decrease'
+                    cm2_move_direction = 'increase' if primary_this > primary_last else 'decrease'
 
                     if (len(result_cm_2) == 1) or (len(result_cm_2) == 2):
                         moves['CM2 %'] = insightDict(
@@ -1132,7 +1143,7 @@ def calculate_growth(financial_statement_values, parsed_data, mid_financial_stat
 
                     cm2_percentage_move, cm2_summary_move = sales_spend_move(cm2_change_pct,cm2_last,cm2_this,sales_change_pct,sales_last,sales_this,spend_change_pct,spend_last,spend_this,last_month_name,5,moveType='Mid Month')
                     if cm2_percentage_move != '':
-                        cm2_move_direction = 'increase' if cm2_change_pct > 0 else 'decrease'
+                        cm2_move_direction = 'increase' if cm2_this > cm2_last else 'decrease'
 
                         moves['CM2 %'] = insightDict(
                                         'CM2 %', 
@@ -1170,7 +1181,7 @@ def calculate_growth(financial_statement_values, parsed_data, mid_financial_stat
 
                         mid_percentage_cm2_move, mid_summary_cm2_move = primary_secondary_double_move(primary_metric, primary_this, primary_last, secondary_metric_1, secondary_this_1, secondary_last_1, secondary_metric_2, secondary_this_2, secondary_last_2, mt_effected, last_month_name,moveType='MidMonth')
 
-                    mid_cm2_move_direction = 'increase' if cm2_rate_change > 0 else 'decrease'
+                    mid_cm2_move_direction = 'increase' if primary_this > primary_last else 'decrease'
 
                     if (len(result_cm2) == 1) or (len(result_cm2) == 2):
                         moves['CM2 %'] = insightDict(
