@@ -25,7 +25,7 @@ def lambda_handler(event, context):
     except:
         data = data
     
-    data['midMonthData'] = True
+    # data['midMonthData'] = True
 
     parsed_data = copy.deepcopy(data)
     print('data', data)
