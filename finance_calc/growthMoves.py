@@ -613,40 +613,46 @@ def calculate_growth(financial_statement_values, parsed_data, mid_financial_stat
     cm1_threshold = 5
     cm2_threshold = 3
     
-    #Dates for manipulation
+    # For moves testing
+
+    # #Dates for manipulation
+    # # Current Date in "mm-yyyy"
+    # current_month = (datetime.now()- timedelta(days=30)).strftime('%m-%Y')
+
+    # # Previous Month-Year
+    # previous_month_year = ((datetime.now()- timedelta(days=30)).replace(day=1) - timedelta(days=1)).strftime('%m-%Y')
+
+    # # Before Previous Month-Year
+    # before_previous_month_year = ((datetime.now()- timedelta(days=30)).replace(day=1) - timedelta(days=1)).replace(day=1) - timedelta(days=1)
+    # before_previous_month_year = before_previous_month_year.strftime('%m-%Y')
+
+    # two_months_before_previous_month_year = (((datetime.now()- timedelta(days=30)).replace(day=1) - timedelta(days=1)).replace(day=1) - timedelta(days=1)).replace(day=1) - timedelta(days=1)
+    # two_months_before_previous_month_year = two_months_before_previous_month_year.strftime('%m-%Y')
+    
+    # print("Current Month (mm-yyyy):", current_month)
+    # print("Previous Month-Year (mm-yyyy):", previous_month_year)
+    # print("Before Previous Month-Year (mm-yyyy):", before_previous_month_year)
+    # print("Two Months Before Previous Month-Year (mm-yyyy):", two_months_before_previous_month_year)
+    
+
     # Current Date in "mm-yyyy"
-    current_month = (datetime.now()- timedelta(days=30)).strftime('%m-%Y')
+    current_month = datetime.now().strftime('%m-%Y')
 
     # Previous Month-Year
-    previous_month_year = ((datetime.now()- timedelta(days=30)).replace(day=1) - timedelta(days=1)).strftime('%m-%Y')
+    previous_month_year = (datetime.now().replace(day=1) - timedelta(days=1)).strftime('%m-%Y')
 
     # Before Previous Month-Year
-    before_previous_month_year = ((datetime.now()- timedelta(days=30)).replace(day=1) - timedelta(days=1)).replace(day=1) - timedelta(days=1)
+    before_previous_month_year = (datetime.now().replace(day=1) - timedelta(days=1)).replace(day=1) - timedelta(days=1)
     before_previous_month_year = before_previous_month_year.strftime('%m-%Y')
 
-    two_months_before_previous_month_year = (((datetime.now()- timedelta(days=30)).replace(day=1) - timedelta(days=1)).replace(day=1) - timedelta(days=1)).replace(day=1) - timedelta(days=1)
+    # Two months before Previous Month-Year
+    two_months_before_previous_month_year = ((datetime.now().replace(day=1) - timedelta(days=1)).replace(day=1) - timedelta(days=1)).replace(day=1) - timedelta(days=1)
     two_months_before_previous_month_year = two_months_before_previous_month_year.strftime('%m-%Y')
-    
+
     print("Current Month (mm-yyyy):", current_month)
     print("Previous Month-Year (mm-yyyy):", previous_month_year)
     print("Before Previous Month-Year (mm-yyyy):", before_previous_month_year)
     print("Two Months Before Previous Month-Year (mm-yyyy):", two_months_before_previous_month_year)
-    
-
-#     # Current Date in "mm-yyyy"
-#     current_month = datetime.now().strftime('%m-%Y')
-
-#     # Previous Month-Year
-#     previous_month_year = (datetime.now().replace(day=1) - timedelta(days=1)).strftime('%m-%Y')
-
-#     # Before Previous Month-Year
-#     before_previous_month_year = (datetime.now().replace(day=1) - timedelta(days=1)).replace(day=1) - timedelta(days=1)
-#     before_previous_month_year = before_previous_month_year.strftime('%m-%Y')
-
-#     print("Current Month (mm-yyyy):", current_month)
-#     print("Previous Month-Year (mm-yyyy):", previous_month_year)
-#     print("Before Previous Month-Year (mm-yyyy):", before_previous_month_year)
-    
     
     flattened_records = flatten_data(parsed_data['inputDataMapping'])
 
@@ -726,13 +732,12 @@ def calculate_growth(financial_statement_values, parsed_data, mid_financial_stat
 
         mid_outer_df = mid_df_financial.merge(financial_statement_id_mapping,on='financial_statement_id',how='left')
 
-        # Date to be changed wrong hai ---------------------------------------------------------------------------------------------------
-        mid_outer_this = mid_outer_df[mid_outer_df['month_year'] == previous_month_year]#current_month]
-        mid_outer_last = mid_outer_df[mid_outer_df['month_year'] == before_previous_month_year]#previous_month_year]
+        mid_outer_this = mid_outer_df[mid_outer_df['month_year'] == current_month]
+        mid_outer_last = mid_outer_df[mid_outer_df['month_year'] == previous_month_year]
 
-        mid_inner_this = mid_inner_df[mid_inner_df['monthYear'] == previous_month_year]
-        mid_inner_last = mid_inner_df[mid_inner_df['monthYear'] == before_previous_month_year]
-        mid_inner_before_last = mid_inner_df[mid_inner_df['monthYear'] == two_months_before_previous_month_year]
+        mid_inner_this = mid_inner_df[mid_inner_df['monthYear'] == current_month]
+        mid_inner_last = mid_inner_df[mid_inner_df['monthYear'] == previous_month_year]
+        mid_inner_before_last = mid_inner_df[mid_inner_df['monthYear'] == before_previous_month_year]
         
     
     # Last month name for moves
