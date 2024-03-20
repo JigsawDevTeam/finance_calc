@@ -308,7 +308,9 @@ def calculate_relation_input_data(input_data_mapping, date, fst_temp_values, fin
                 'percentage_value': single_input_data['percentageValue'],
                 'relation_metric_id': single_input_data['relationMetricId'],
                 'relation_type': single_input_data['relationType'],
-                'is_mid_month': single_input_data['isMidMonth']
+                'is_mid_month': single_input_data['isMidMonth'],
+                'edited_by': single_input_data['editedBy'],
+                'edited_time': single_input_data['editedTime']
             }
 
             calculated_input_data.append(dummy)
