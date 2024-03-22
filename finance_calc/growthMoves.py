@@ -156,11 +156,11 @@ def sales_spend_move(cm2_change_pct,cm2_last,cm2_this,sales_change_pct,sales_las
     
         if moveType == 'Monthly':
             message = f"CM2 % in {last_month_name} {cm2_trend} to {format_percentage(cm2_this)}% from {format_percentage(cm2_last)}%."
-            summary = f"CM2 % in {last_month_name} {cm2_trend} to <b>{format_percentage(cm2_this)}%</b> from <b>{format_percentage(cm2_last)}%</b>."
+            summary = f"CM2 % in {last_month_name} {cm2_trend} to <b>{format_percentage(cm2_this)}%</b> from <b>{format_percentage(cm2_last)}%</b>"
             suffix = ''
         else:
             message = f"CM2 % this month {cm2_trend} to {format_percentage(cm2_this)}% from {format_percentage(cm2_last)}% last month."
-            summary = f"CM2 % this month {cm2_trend} to <b>{format_percentage(cm2_this)}%</b> from <b>{format_percentage(cm2_last)}%</b> last month."
+            summary = f"CM2 % this month {cm2_trend} to <b>{format_percentage(cm2_this)}%</b> from <b>{format_percentage(cm2_last)}%</b> last month"
             suffix = ' at this time last month'
 
         # Conditions and messages
@@ -244,7 +244,7 @@ def cogs_sales_move(gp_change_pct,gp_last,gp_this,sales_change_pct,sales_last,sa
     
     if moveType == 'Monthly':
         if abs(cogs_change_pct) >= abs(sales_change_pct): 
-            summary = f"Gross Profit % in {last_month_name} {gp_trend} to <b>{format_percentage(gp_this)}%</b> from <b>{format_percentage(gp_last)}%</b>."
+            summary = f"Gross Profit % in {last_month_name} {gp_trend} to <b>{format_percentage(gp_this)}%</b> from <b>{format_percentage(gp_last)}%</b>"
             message = f"Gross Profit % in {last_month_name} {gp_trend} to {format_percentage(gp_this)}% from {format_percentage(gp_last)}%."
             if gp_trend == "fell":
                 if sales_trend == "decreased" and cogs_trend == "increased":
@@ -267,7 +267,7 @@ def cogs_sales_move(gp_change_pct,gp_last,gp_this,sales_change_pct,sales_last,sa
                     
     else:
         if abs(cogs_change_pct) >= abs(sales_change_pct): 
-            summary = f"Gross Profit % this month {gp_trend} to <b>{format_percentage(gp_this)}%</b> from <b>{format_percentage(gp_last)}%</b> last month."
+            summary = f"Gross Profit % this month {gp_trend} to <b>{format_percentage(gp_this)}%</b> from <b>{format_percentage(gp_last)}%</b> last month"
             message = f"Gross Profit % this month {gp_trend} to {format_percentage(gp_this)}% from {format_percentage(gp_last)}% last month."
             if gp_trend == "fell":
                 if sales_trend == "decreased" and cogs_trend == "increased":
@@ -321,7 +321,7 @@ def primary_secondary_single_move(primary_metric, primary_this, primary_last, se
         if secondary_metrics:
             if moveType == 'Monthly':
                 # Construct the message
-                summary = f"{primary_metric} in {last_month_name} {primary_change} to <b>{format_percentage(primary_this)}%</b> from <b>{format_percentage(primary_last)}%</b>."
+                summary = f"{primary_metric} in {last_month_name} {primary_change} to <b>{format_percentage(primary_this)}%</b> from <b>{format_percentage(primary_last)}%</b>"
                 message = f"{primary_metric} in {last_month_name} {primary_change} to {format_percentage(primary_this)}% from {format_percentage(primary_last)}%." \
                           f"<br>This is due to {secondary_change} in growth of {secondary_metric} to {format_percentage(secondary_this)}% from {format_percentage(secondary_last)}%." 
 
@@ -329,7 +329,7 @@ def primary_secondary_single_move(primary_metric, primary_this, primary_last, se
                     message += f"<br>This also {primary_effect} the {metrics_affected} for the month."
 
             else:
-                summary = f"{primary_metric} this month {primary_change} to <b>{format_percentage(primary_this)}%</b> from <b>{format_percentage(primary_last)}%</b> last month."
+                summary = f"{primary_metric} this month {primary_change} to <b>{format_percentage(primary_this)}%</b> from <b>{format_percentage(primary_last)}%</b> last month"
                 message = f"{primary_metric} this month {primary_change} to {format_percentage(primary_this)}% from {format_percentage(primary_last)}% last month." \
                           f"<br>This is due to {secondary_change} in growth of {secondary_metric} to {format_percentage(secondary_this)}% from {format_percentage(secondary_last)}% at this time last month." 
 
@@ -338,14 +338,14 @@ def primary_secondary_single_move(primary_metric, primary_this, primary_last, se
         else:
             if moveType == 'Monthly':
                 # Construct the message
-                summary = f"{primary_metric} in {last_month_name} {primary_change} to <b>{format_percentage(primary_this)}%</b> from <b>{format_percentage(primary_last)}%</b>."
+                summary = f"{primary_metric} in {last_month_name} {primary_change} to <b>{format_percentage(primary_this)}%</b> from <b>{format_percentage(primary_last)}%</b>"
                 message = f"{primary_metric} in {last_month_name} {primary_change} to {format_percentage(primary_this)}% from {format_percentage(primary_last)}%."
 
                 if metrics_affected != '':
                     message += f"<br>This also {primary_effect} the {metrics_affected} for the month."
 
             else:
-                summary = f"{primary_metric} this month {primary_change} to <b>{format_percentage(primary_this)}%</b> from <b>{format_percentage(primary_last)}%</b> last month."
+                summary = f"{primary_metric} this month {primary_change} to <b>{format_percentage(primary_this)}%</b> from <b>{format_percentage(primary_last)}%</b> last month"
                 message = f"{primary_metric} this month {primary_change} to {format_percentage(primary_this)}% from {format_percentage(primary_last)}% last month."
                 if metrics_affected != '':
                         message += f"<br>This also {primary_effect} the {metrics_affected} for the month."
@@ -353,7 +353,7 @@ def primary_secondary_single_move(primary_metric, primary_this, primary_last, se
     else:
         if moveType == 'Monthly':
             # Construct the message
-            summary = f"{primary_metric} in {last_month_name} {primary_change} to <b>{format_percentage(primary_this)}%</b> from <b>{format_percentage(primary_last)}%</b>."
+            summary = f"{primary_metric} in {last_month_name} {primary_change} to <b>{format_percentage(primary_this)}%</b> from <b>{format_percentage(primary_last)}%</b>"
             message = f"{primary_metric} in {last_month_name} {primary_change} to {format_percentage(primary_this)}% from {format_percentage(primary_last)}%." \
                       f"<br>This is due to {secondary_change} in {secondary_metric} to {format_value(secondary_this)} from {format_value(secondary_last)}." 
 
@@ -361,7 +361,7 @@ def primary_secondary_single_move(primary_metric, primary_this, primary_last, se
                 message += f"<br>This also {primary_effect} the {metrics_affected} for the month."
 
         else:
-            summary = f"{primary_metric} this month {primary_change} to <b>{format_percentage(primary_this)}%</b> from <b>{format_percentage(primary_last)}%</b> last month."
+            summary = f"{primary_metric} this month {primary_change} to <b>{format_percentage(primary_this)}%</b> from <b>{format_percentage(primary_last)}%</b> last month"
             message = f"{primary_metric} this month {primary_change} to {format_percentage(primary_this)}% from {format_percentage(primary_last)}% last month." \
                       f"<br>This is due to {secondary_change} in {secondary_metric} to {format_value(secondary_this)} from {format_value(secondary_last)} at this time last month." 
 
@@ -411,7 +411,7 @@ def primary_secondary_double_move(primary_metric, primary_this, primary_last, se
         if secondary_metrics:
             if moveType == 'Monthly':
                 # Construct the message
-                summary = f"{primary_metric} in {last_month_name} {primary_change} to <b>{format_percentage(primary_this)}%</b> from <b>{format_percentage(primary_last)}%</b>."
+                summary = f"{primary_metric} in {last_month_name} {primary_change} to <b>{format_percentage(primary_this)}%</b> from <b>{format_percentage(primary_last)}%</b>"
                 message = f"{primary_metric} in {last_month_name} {primary_change} to {format_percentage(primary_this)}% from {format_percentage(primary_last)}%." \
                           f"<br>This is due to {secondary_change_1} in growth of {secondary_metric_1} to {format_percentage(secondary_this_1)}% from {format_percentage(secondary_last_1)}% " \
                           f"or {secondary_change_2} in growth of {secondary_metric_2} to {format_percentage(secondary_this_2)}% from {format_percentage(secondary_last_2)}%." 
@@ -419,7 +419,7 @@ def primary_secondary_double_move(primary_metric, primary_this, primary_last, se
                 if metrics_affected != '':
                     message += f"<br>This also {primary_effect} the {metrics_affected} for the month."  
             else:
-                summary = f"{primary_metric} this month {primary_change} to <b>{format_percentage(primary_this)}%</b> from <b>{format_percentage(primary_last)}%</b> last month."
+                summary = f"{primary_metric} this month {primary_change} to <b>{format_percentage(primary_this)}%</b> from <b>{format_percentage(primary_last)}%</b> last month"
                 message = f"{primary_metric} this month {primary_change} to {format_percentage(primary_this)}% from {format_percentage(primary_last)}% last month." \
                           f"<br>This is due to {secondary_change_1} in growth of {secondary_metric_1} to {format_percentage(secondary_this_1)}% from {format_percentage(secondary_last_1)}% at this time last month " \
                           f"or {secondary_change_2} in growth of {secondary_metric_2} to {format_percentage(secondary_this_2)}% from {format_percentage(secondary_last_2)}% at this time last month." 
@@ -429,13 +429,13 @@ def primary_secondary_double_move(primary_metric, primary_this, primary_last, se
         else:
             if moveType == 'Monthly':
                 # Construct the message
-                summary = f"{primary_metric} in {last_month_name} {primary_change} to <b>{format_percentage(primary_this)}%</b> from <b>{format_percentage(primary_last)}%</b>."
+                summary = f"{primary_metric} in {last_month_name} {primary_change} to <b>{format_percentage(primary_this)}%</b> from <b>{format_percentage(primary_last)}%</b>"
                 message = f"{primary_metric} in {last_month_name} {primary_change} to {format_percentage(primary_this)}% from {format_percentage(primary_last)}%."
 
                 if metrics_affected != '':
                     message += f"<br>This also {primary_effect} the {metrics_affected} for the month."  
             else:
-                summary = f"{primary_metric} this month {primary_change} to <b>{format_percentage(primary_this)}%</b> from <b>{format_percentage(primary_last)}%</b> last month."
+                summary = f"{primary_metric} this month {primary_change} to <b>{format_percentage(primary_this)}%</b> from <b>{format_percentage(primary_last)}%</b> last month"
                 message = f"{primary_metric} this month {primary_change} to {format_percentage(primary_this)}% from {format_percentage(primary_last)}% last month."
 
                 if metrics_affected != '':
@@ -444,7 +444,7 @@ def primary_secondary_double_move(primary_metric, primary_this, primary_last, se
     else:
         if moveType == 'Monthly':
             # Construct the message
-            summary = f"{primary_metric} in {last_month_name} {primary_change} to <b>{format_percentage(primary_this)}%</b> from <b>{format_percentage(primary_last)}%</b>."
+            summary = f"{primary_metric} in {last_month_name} {primary_change} to <b>{format_percentage(primary_this)}%</b> from <b>{format_percentage(primary_last)}%</b>"
             message = f"{primary_metric} in {last_month_name} {primary_change} to {format_percentage(primary_this)}% from {format_percentage(primary_last)}%." \
                       f"<br>This is due to {secondary_change_1} in {secondary_metric_1} to {format_value(secondary_this_1)} from {format_value(secondary_last_1)} " \
                       f"or {secondary_change_2} in {secondary_metric_2} to {format_value(secondary_this_2)} from {format_value(secondary_last_2)}." 
@@ -452,7 +452,7 @@ def primary_secondary_double_move(primary_metric, primary_this, primary_last, se
             if metrics_affected != '':
                 message += f"<br>This also {primary_effect} the {metrics_affected} for the month."  
         else:
-            summary = f"{primary_metric} this month {primary_change} to <b>{format_percentage(primary_this)}%</b> from <b>{format_percentage(primary_last)}%</b> last month."
+            summary = f"{primary_metric} this month {primary_change} to <b>{format_percentage(primary_this)}%</b> from <b>{format_percentage(primary_last)}%</b> last month"
             message = f"{primary_metric} this month {primary_change} to {format_percentage(primary_this)}% from {format_percentage(primary_last)}% last month." \
                       f"<br>This is due to {secondary_change_1} in {secondary_metric_1} to {format_value(secondary_this_1)} from {format_value(secondary_last_1)} at this time last month " \
                       f"or {secondary_change_2} in {secondary_metric_2} to {format_value(secondary_this_2)} from {format_value(secondary_last_2)} at this time last month." 
