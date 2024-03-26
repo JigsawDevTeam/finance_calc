@@ -192,7 +192,7 @@ def get_single_fs_values(fst_metric, last12CYMonthsArr, input_data_mapping, metr
                             
                             
                             ## RECALCULTED VALUES WILL BE DIRECTLY CHANGED TO INPUT_DATA_MAPPING as array and object are passed by reference
-                            calculate_relation_input_data(input_data_mapping, date, fst_temp_values, finance_statement_table, metricId, calculated_input_data)
+                            calculate_relation_input_data(input_data_mapping, date, fst_temp_values, finance_statement_table, metricId, calculated_input_data, mid_month_boolean_value)
 
                             inEffectString = input_data_mapping[date][metricId]['inEffectValue']
                             inEffectString = to_camel_case(inEffectString)
@@ -273,7 +273,7 @@ def get_single_fs_values(fst_metric, last12CYMonthsArr, input_data_mapping, metr
                 
     return allData, fst_temp_values
 
-def calculate_relation_input_data(input_data_mapping, date, fst_temp_values, finance_statement_table, metricId, calculated_input_data):
+def calculate_relation_input_data(input_data_mapping, date, fst_temp_values, finance_statement_table, metricId, calculated_input_data, mid_month_boolean_value = 0):
     try:
         single_input_data = input_data_mapping[date][metricId]
         relation_type = single_input_data['relationType']
@@ -293,9 +293,11 @@ def calculate_relation_input_data(input_data_mapping, date, fst_temp_values, fin
 
 
         if temp_value != -1:
-            recalc_value = round(((single_input_data['percentageValue'] * temp_value ) / 100), 2)
-            single_input_data['updatedCost'] = recalc_value
-            
+
+            if single_input_data['isPercentage']:
+                recalc_value = round(((single_input_data['percentageValue'] * temp_value ) / 100), 2)
+                single_input_data['updatedCost'] = recalc_value    
+
             dummy = {
                 'fs_metric_id': single_input_data['metricId'],
                 'company_id': single_input_data['companyId'],
@@ -308,10 +310,15 @@ def calculate_relation_input_data(input_data_mapping, date, fst_temp_values, fin
                 'percentage_value': single_input_data['percentageValue'],
                 'relation_metric_id': single_input_data['relationMetricId'],
                 'relation_type': single_input_data['relationType'],
-                'is_mid_month': single_input_data['isMidMonth'],
-                'edited_by': single_input_data['editedBy'],
-                'edited_time': single_input_data['editedTime']
+                'is_mid_month': mid_month_boolean_value,
             }
+
+            if 'editedBy' in single_input_data and 'editedTime' in single_input_data:
+                dummy = {
+                    **dummy,
+                    'edited_by': single_input_data['editedBy'],
+                    'edited_time': single_input_data['editedTime']
+                }
 
             calculated_input_data.append(dummy)
     except Exception as e:
