@@ -3,7 +3,7 @@ name: Python SAM CI/CD
 on:
   push:
     branches:
-      - development # Set the branch for which to trigger the pipeline
+      - devstaging # Set the branch for which to trigger the pipeline
 
 jobs:
   build:
