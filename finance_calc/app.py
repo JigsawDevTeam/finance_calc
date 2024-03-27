@@ -73,7 +73,9 @@ def lambda_handler(event, context):
         
     moves_result = []
     
+    
     if generateMoves:
+        mid_calculated_input_data = []
         mid_financial_statement_values = []
         if midMonthData:
             def process_entry(entry):
@@ -87,7 +89,7 @@ def lambda_handler(event, context):
                     entry['quantity'] = entry.pop('quantityMidMonth')
                 return entry   
 
-            mid_calculated_input_data = []
+            # mid_calculated_input_data = []
 
             mid_required_calc_metrics = []
             mid_required_calc_metrics_names = []
