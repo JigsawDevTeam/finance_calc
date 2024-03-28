@@ -42,7 +42,7 @@ def calculate_values(formula, value_map):
         print(f'Error in calculate values: {e} {formula}')
         return 0
 
-def input_data_recalc(required_calc_metrics, last12CYMonthsArr, input_data_mapping, company_id, unit, calculated_input_data, date):
+def input_data_recalc(required_calc_metrics, last12CYMonthsArr, input_data_mapping, company_id, unit, calculated_input_data, date, mid_month_boolean_value):
     try:
         dummy = {
             'fs_metric_id': 0,
@@ -56,6 +56,9 @@ def input_data_recalc(required_calc_metrics, last12CYMonthsArr, input_data_mappi
             'percentage_value': 0,
             'relation_metric_id': 0,
             'relation_type': 'metric',
+            'is_mid_month': mid_month_boolean_value,
+            'edited_by': None,
+            'edited_time': None
         }
         for i in required_calc_metrics:
             formula_string = i['formula']
@@ -71,7 +74,7 @@ def input_data_recalc(required_calc_metrics, last12CYMonthsArr, input_data_mappi
                     'unit': unit,
                     'month_year': date,
                 }
-                input_data_mapping[date][i['fsmId']] = calculated_value
+                input_data_mapping[date][str(i['fsmId'])] = newObj
 
             calculated_input_data.append(newObj)
     except Exception as e:
@@ -184,20 +187,20 @@ def get_single_fs_values(fst_metric, last12CYMonthsArr, input_data_mapping, metr
                     for metrics in metrics_mapping[fst_metric['name']]:
                         metricId = str(metrics['fsmId'])
                         
-                        if (date in input_data_mapping) and (metricId in input_data_mapping[date]):
+                        if (date in input_data_mapping) and ((metricId in input_data_mapping[date]) or (metrics['fsmName'] in required_calc_metrics_names)):
                             ## RECALCULATE THE INPUT METRICS FIRST
                             ## CODE FOR RECALC
                             if metrics['fsmName'] in required_calc_metrics_names:
-                                input_data_recalc(required_calc_metrics, last12CYMonthsArr, input_data_mapping, company_id, unit, calculated_input_data, date)
-                            
-                            
+                                input_data_recalc(required_calc_metrics, last12CYMonthsArr, input_data_mapping, company_id, unit, calculated_input_data, date, mid_month_boolean_value)
+                                inEffectString = 'updated_cost'
+                            else:
                             ## RECALCULTED VALUES WILL BE DIRECTLY CHANGED TO INPUT_DATA_MAPPING as array and object are passed by reference
-                            calculate_relation_input_data(input_data_mapping, date, fst_temp_values, finance_statement_table, metricId, calculated_input_data, mid_month_boolean_value)
-
-                            inEffectString = input_data_mapping[date][metricId]['inEffectValue']
-                            inEffectString = to_camel_case(inEffectString)
+                                calculate_relation_input_data(input_data_mapping, date, fst_temp_values, finance_statement_table, metricId, calculated_input_data, mid_month_boolean_value)
+                                inEffectString = input_data_mapping[date][metricId]['inEffectValue']
+                                inEffectString = to_camel_case(inEffectString)
+                            
                             # print(input_data_mapping[date][metricId][inEffectString], inEffectString)
-                            total += input_data_mapping[date][metricId][inEffectString] if input_data_mapping[date][metricId][inEffectString] != None else 0
+                            total += input_data_mapping[date][metricId][inEffectString] if metricId in input_data_mapping[date] and input_data_mapping[date][metricId][inEffectString] != None else 0
 
                     # Storing for DB storage
                     dummy = {
