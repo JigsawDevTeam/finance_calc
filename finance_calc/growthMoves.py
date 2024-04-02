@@ -475,9 +475,9 @@ def getTagline(metric: str, change: str):
 
     try:
         tagline_store = {
-            '% Growth': {
-                'increase': "% Growth Up",
-                'decrease': "% Growth Dropped"
+            'Monthly Growth %': {
+                'increase': "Monthly Growth % Up",
+                'decrease': "Monthly Growth % Dropped"
             },
             'Gross Profit %': {
                 'increase': "Gross Profit % Up",
@@ -693,7 +693,7 @@ def calculate_growth(financial_statement_values, parsed_data, mid_financial_stat
     inner_before_last = inner_df[inner_df['monthYear'] == two_months_before_previous_month_year]
     
     moves = {
-            '% Growth': {},
+            'Monthly Growth %': {},
             'Gross Profit %': {},
             'CM1 %' : {},
             'CM2 %' : {}
@@ -749,8 +749,8 @@ def calculate_growth(financial_statement_values, parsed_data, mid_financial_stat
     
     try:
         if not midMonthData:
-            # % Growth Move
-            primary_metric = "% Growth"
+            # Monthly Growth % Move
+            primary_metric = "Monthly Growth %"
             primary_metric_name = "Sales Growth"
             primary_this = valuegetter(outer_this,'name',primary_metric,'value') 
             primary_last = valuegetter(outer_last,'name',primary_metric,'value') 
@@ -766,7 +766,7 @@ def calculate_growth(financial_statement_values, parsed_data, mid_financial_stat
 
             if abs(growth_rate_change) >= growth_threshold:
 
-                result_growth = growth_subset_df(financial_statement_id_mapping,inner_this,inner_last,inner_before_last,'','% Growth',growth_rate_change)
+                result_growth = growth_subset_df(financial_statement_id_mapping,inner_this,inner_last,inner_before_last,'','Monthly Growth %',growth_rate_change)
                 if len(result_growth) == 1:
                     secondary_metric = list(result_growth.keys())[0]
                     secondary_this_value = valuegetter(inner_this,'fsmName',secondary_metric,'finalValue')  
@@ -806,8 +806,8 @@ def calculate_growth(financial_statement_values, parsed_data, mid_financial_stat
                 growth_move_direction = 'increase' if primary_this > primary_last else 'decrease'
 
                 if (len(result_growth) == 1) or (len(result_growth) == 2):
-                    moves['% Growth'] = insightDict(
-                                    '% Growth', 
+                    moves['Monthly Growth %'] = insightDict(
+                                    'Monthly Growth %', 
                                     percentage_growth_move, 
                                     summary_growth_move, 
                                     growth_move_direction,
@@ -816,7 +816,7 @@ def calculate_growth(financial_statement_values, parsed_data, mid_financial_stat
 
         if midMonthData:
             # Mid Monthly Move
-            primary_metric = "% Growth"
+            primary_metric = "Monthly Growth %"
             primary_metric_name = "Sales Growth"
             primary_this = valuegetter(mid_outer_this,'name',primary_metric,'value') 
             primary_last = valuegetter(outer_this,'name',primary_metric,'value') 
@@ -833,7 +833,7 @@ def calculate_growth(financial_statement_values, parsed_data, mid_financial_stat
 
             if abs(growth_rate_change) >= growth_threshold:
 
-                result_growth = growth_subset_df(financial_statement_id_mapping,mid_inner_this,mid_inner_last,inner_before_last,'','% Growth',growth_rate_change)
+                result_growth = growth_subset_df(financial_statement_id_mapping,mid_inner_this,mid_inner_last,inner_before_last,'','Monthly Growth %',growth_rate_change)
                 if len(result_growth) == 1:
                     secondary_metric = list(result_growth.keys())[0]
 
@@ -875,8 +875,8 @@ def calculate_growth(financial_statement_values, parsed_data, mid_financial_stat
                 mid_growth_move_direction = 'increase' if primary_this > primary_last else 'decrease'
 
                 if (len(result_growth) == 1) or (len(result_growth) == 2):
-                    moves['% Growth'] = insightDict(
-                                '% Growth', 
+                    moves['Monthly Growth %'] = insightDict(
+                                'Monthly Growth %', 
                                 mid_percentage_growth_move, 
                                 mid_summary_growth_move, 
                                 mid_growth_move_direction,
@@ -884,7 +884,7 @@ def calculate_growth(financial_statement_values, parsed_data, mid_financial_stat
                             )
 
     except Exception as e:
-        print(f'Error in % Growth Move: {e}')
+        print(f'Error in Monthly Growth % Move: {e}')
     
     try:
         # Gross Profit % Move

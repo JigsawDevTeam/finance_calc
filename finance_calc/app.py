@@ -73,7 +73,9 @@ def lambda_handler(event, context):
         
     moves_result = []
     
+    
     if generateMoves:
+        mid_calculated_input_data = []
         mid_financial_statement_values = []
         if midMonthData:
             def process_entry(entry):
@@ -87,7 +89,7 @@ def lambda_handler(event, context):
                     entry['quantity'] = entry.pop('quantityMidMonth')
                 return entry   
 
-            mid_calculated_input_data = []
+            # mid_calculated_input_data = []
 
             mid_required_calc_metrics = []
             mid_required_calc_metrics_names = []
@@ -126,7 +128,7 @@ def lambda_handler(event, context):
                 "midFinanceStatementValues": mid_financial_statement_values,
                 "financeStatementMoves": moves_result,
                 "updatedProductCosts": updated_product_costs,
-                "inputData": calculated_input_data,
+                "inputData": calculated_input_data + mid_calculated_input_data,
                 "financeStatementValues": financial_statement_values,
                 "companyId": company_id,
                 "jobId": job_id
@@ -163,5 +165,5 @@ def lambda_handler(event, context):
 
 # lambda_handler({
 #     "bucket":"uploadfiles-jigsaw",
-#     "key":"26_dev/financeCalcDev-FinanceCalc-tUyY8ekJ6gGl/payload-1710326660751.json"
+#     "key":"23_dev/financeCalcDev-FinanceCalc-tUyY8ekJ6gGl/payload-1711121132670.json"
 # }, None)
