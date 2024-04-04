@@ -10,6 +10,10 @@ def get_direct_formulae():
         'CM1 %': '(CM1/Net Sales)*100',
         'CM2': 'CM1-Ad Spend-Platform Commission-Additional Cost',
         'CM2 %': '(CM2/Net Sales)*100',
+        'EBITDA': 'CM2 - Operating Expenses',
+        'EBITDA Margin': 'EBITDA/Net Sales',
+        'Net Cash': 'EBITDA - Loan Servicing',
+        'Net Cash Margin': 'Net Cash/Net Sales',
     }
 
 def calculate_values(formula, value_map):
