@@ -11,9 +11,9 @@ def get_direct_formulae():
         'CM2': 'CM1-Ad Spend-Platform Commission-Additional Cost',
         'CM2 %': '(CM2/Net Sales)*100',
         'EBIDTA': 'CM2 - Operating Expenses',
-        'EBIDTA Margin': '(EBIDTA/Net Sales)',
+        'EBIDTA Margin': '(EBIDTA/Net Sales)*100',
         'Net Cash': 'EBIDTA - Loan Servicing',
-        'Net Cash Margin': '(Net Cash/Net Sales)',
+        'Net Cash Margin': '(Net Cash/Net Sales)*100',
     }
 
 def calculate_values(formula, value_map):
