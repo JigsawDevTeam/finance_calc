@@ -1,6 +1,6 @@
 import json
 import pandas as pd
-from functions import get_direct_formulae, calculate_values, input_data_recalc, calculate_values_str_formula, get_metrics_mapping, to_camel_case, get_single_fs_values, get_cogs_finance_mapping
+from functions import get_direct_formulae, calculate_values, input_data_recalc, calculate_values_str_formula, get_metrics_mapping, to_camel_case, get_single_fs_values, get_cogs_finance_mapping, get_variable_taxes
 import os
 import requests
 from fetchS3 import get_combined_files
@@ -29,7 +29,7 @@ def lambda_handler(event, context):
     # data['midMonthData'] = True
 
     parsed_data = copy.deepcopy(data)
-    print('data', data)
+    print('input data', data)
     
     try:
 
@@ -41,12 +41,21 @@ def lambda_handler(event, context):
             generateMoves = data['generateMoves']
         else:
             generateMoves = False        
-        
+
+        print('midMonthData',midMonthData)
+        print('generateMoves',generateMoves)
+
         # INPUT DATA RECALCULATION
         api_link = data['apiLink']
         metric_mapping_data = data['metricMappingData']
         last12CYMonthsArr = data['last12CYMonthsArr']
         input_data_mapping = data['inputDataMapping']
+        try:
+            tax_applicable = data['taxApplicable']
+        except Exception as e:
+            tax_applicable = 'NOT_APPLICABLE'
+            print(f'taxApplicable not present in input payload, Error: {e}')
+        print('tax_applicable',tax_applicable)
         if midMonthData:
             input_data_mid_mapping = data['inputDataMidMonthMapping']
         finance_statement_table = data['financeStatementTable']
@@ -66,17 +75,23 @@ def lambda_handler(event, context):
         
         metrics_mapping = get_metrics_mapping(metric_mapping_data)
         cogs_finance_mapping, updated_product_costs = get_cogs_finance_mapping(product_cost)
-        
+
+        if tax_applicable == 'VARIABLE':
+            taxes_finance_mapping = get_variable_taxes(product_cost)
+        else:
+            taxes_finance_mapping = {}
+
         ## CALCULATING FINANCIAL STATEMENTS
         financial_statement_values = []
         fst_temp_values = {}
         for fst_metric in finance_statement_table:
-            all_calc_value, fst_temp_values = get_single_fs_values(fst_metric, last12CYMonthsArr, input_data_mapping, metrics_mapping, company_id, unit, fst_temp_values, calculated_input_data, required_calc_metrics_names, finance_statement_table, required_calc_metrics, cogs_finance_mapping, 'Monthly')
+            all_calc_value, fst_temp_values = get_single_fs_values(fst_metric, last12CYMonthsArr, input_data_mapping, metrics_mapping, company_id, unit, fst_temp_values, calculated_input_data, required_calc_metrics_names, finance_statement_table, required_calc_metrics, cogs_finance_mapping, tax_applicable, taxes_finance_mapping, 'Monthly')
+    #         print(all_calc_value)
             financial_statement_values += all_calc_value
-            
+
         moves_result = []
-        
-        
+
+        generateMoves = True
         if generateMoves:
             mid_calculated_input_data = []
             mid_financial_statement_values = []
@@ -90,6 +105,10 @@ def lambda_handler(event, context):
                         entry['quantity'] = entry.pop('quantity_mid_month')
                     if 'quantityMidMonth' in entry:
                         entry['quantity'] = entry.pop('quantityMidMonth')
+                    if 'sales_mid_month' in entry:
+                        entry['sales'] = entry.pop('sales_mid_month')
+                    if 'salesMidMonth' in entry:
+                        entry['sales'] = entry.pop('salesMidMonth')
                     return entry   
 
                 # mid_calculated_input_data = []
@@ -107,6 +126,11 @@ def lambda_handler(event, context):
             #     return mid_product_cost
                 mid_cogs_finance_mapping, mid_updated_product_costs = get_cogs_finance_mapping(mid_product_cost)
 
+                if tax_applicable == 'VARIABLE':
+                    mid_taxes_finance_mapping = get_variable_taxes(mid_product_cost)
+                else:
+                    mid_taxes_finance_mapping = {}
+
                 last13CYMonthsArr = last12CYMonthsArr
                 current_month = datetime.now().strftime('%m-%Y')
                 last13CYMonthsArr.insert(0, current_month)
@@ -115,18 +139,18 @@ def lambda_handler(event, context):
                 mid_financial_statement_values = []
                 mid_fst_temp_values = {}
                 for mid_fst_metric in finance_statement_table:
-                    mid_all_calc_value, mid_fst_temp_values = get_single_fs_values(mid_fst_metric, last13CYMonthsArr, input_data_mid_mapping, mid_metrics_mapping, company_id, unit, mid_fst_temp_values, mid_calculated_input_data, mid_required_calc_metrics_names, finance_statement_table, mid_required_calc_metrics, mid_cogs_finance_mapping,'Mid Month')
+                    mid_all_calc_value, mid_fst_temp_values = get_single_fs_values(mid_fst_metric, last13CYMonthsArr, input_data_mid_mapping, mid_metrics_mapping, company_id, unit, mid_fst_temp_values, mid_calculated_input_data, mid_required_calc_metrics_names, finance_statement_table, mid_required_calc_metrics, mid_cogs_finance_mapping, tax_applicable, mid_taxes_finance_mapping, 'Mid Month')
                     mid_financial_statement_values += mid_all_calc_value    
 
-            print('financial_statement_values',financial_statement_values)
-            print('parsed_data',parsed_data)
-            print('mid_financial_statement_values',mid_financial_statement_values)
+            # print('financial_statement_values',financial_statement_values)
+            # print('parsed_data',parsed_data)
+            # print('mid_financial_statement_values',mid_financial_statement_values)
             moves_result = growthMoves.calculate_growth(financial_statement_values, parsed_data, mid_financial_statement_values)
 
-            print('moves_result',moves_result)
+            # print('moves_result',moves_result)
 
     #     return moves_result,"",""
-    #     return financial_statement_values,parsed_data,mid_financial_statement_values
+    #     return financial_statement_values,parsed_data,mid_financial_statement_values,calculated_input_data,mid_calculated_input_data
             body = {
                     "midFinanceStatementValues": mid_financial_statement_values,
                     "financeStatementMoves": moves_result,
@@ -179,5 +203,5 @@ def lambda_handler(event, context):
 
 # lambda_handler({
 #     "bucket":"uploadfiles-jigsaw",
-#     "key":"23_dev/financeCalcDev-FinanceCalc-tUyY8ekJ6gGl/payload-1711121132670.json"
+#     "key":"97_dev/financeCalcDev-FinanceCalc-tUyY8ekJ6gGl/payload-1712673962366.json"
 # }, None)

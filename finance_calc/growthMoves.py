@@ -88,6 +88,27 @@ def format_value(number):
             l_value = round(number / 100000, 1)
             return f"{l_value:.0f}L" if l_value.is_integer() else f"{l_value}L"
 
+def affected_metrics(primary_dict, standard_change, keys_to_consider):
+    try:
+        # Filter the dictionary by the specified keys
+        filtered_dict = {k: v for k, v in primary_dict.items() if k in keys_to_consider}
+
+        if len(filtered_dict) > 0:
+            # Sort the filtered dictionary by the absolute values in descending order
+            sorted_data = sorted(filtered_dict.items(), key=lambda item: abs(item[1]), reverse=True)
+
+            # Check if the top two elements have less than 10% difference in their absolute values
+            if len(sorted_data) > 1 and abs(abs(sorted_data[0][1]) - abs(sorted_data[1][1])) / abs(sorted_data[0][1]) < 0.10:
+                result_dict = f"{sorted_data[0][0]} and {sorted_data[1][0]}"  # Keep top 2 elements based on their original values
+            else:
+                result_dict = sorted_data[0][0]  # Keep only the top element based on its original value
+        else:
+            result_dict = ''
+
+        return result_dict
+    except:
+        return ''
+        
 def select_top_elements_abs(data_dict,metric_rate_change):
     """
     Selects the top 1 or 2 elements from a dictionary based on their absolute values.
@@ -125,30 +146,51 @@ def select_top_elements_abs(data_dict,metric_rate_change):
     
     return result_dict
 
-def sales_spend_move(cm2_change_pct,cm2_last,cm2_this,sales_change_pct,sales_last,sales_this,spend_change_pct,spend_last,spend_this,last_month_name,threshold,moveType='Monthly'):
+def adjust_decimal_corrected(number):
+    try:
+        if number == np.inf or number == -np.inf or np.isnan(number):
+            number = 0
+
+        # Since value will never be negative, we start by trying to round to 1 decimal place
+        rounded_value = round(number, 1)
+        if rounded_value > 0:
+            return rounded_value
+        else:
+            # Try rounding to 2 decimal places if 1 decimal place gives 0
+            rounded_value = round(number, 2)
+            if rounded_value > 0:
+                return rounded_value
+            else:
+                # Try rounding to 3 decimal places if 2 decimal places still gives 0
+                rounded_value = round(number, 3)
+                if rounded_value > 0:
+                    return rounded_value
+                else:
+                    # If value is still 0 after rounding to 3 decimal places, return 0
+                    return 0
+    except:
+        return number
+
+def sales_spend_move(cm2_change_pct,cm2_last,cm2_this,sales_change_pct,sales_last,sales_this,spend_change_pct,spend_last,spend_this,last_month_name,metrics_affected,threshold,moveType='Monthly'):
     sales_change = sales_this - sales_last
     spend_change = spend_this - spend_last
     
-#     cm2_change_pct = 3
-#     sales_change_pct = 12
-#     spend_change_pct = -13
+    if cm2_this > cm2_last:
+        primary_effect = "increased"  # Use 'increased' if primary metric fell
+    else:
+        primary_effect = "reduced"  # Use 'reduced' if primary metric increased
     
-#     sales_change = 12 
-#     spend_change = 13
+    s_s_ratio_this = spend_this / sales_this
+    s_s_ratio_last = spend_last / sales_last
+    
+    s_s_ratio_this = adjust_decimal_corrected(s_s_ratio_this)
+    s_s_ratio_last = adjust_decimal_corrected(s_s_ratio_last)
     
     # Determine trends
     cm2_trend = "increased" if cm2_change_pct > 0 else "fell"
     sales_trend = "increased" if sales_change_pct > threshold else "decreased" if sales_change_pct < -(threshold) else "steady"
     spend_trend = "increased" if spend_change_pct > threshold else "decreased" if spend_change_pct < -(threshold) else "steady"
     
-#     print('cm2_change_pct',cm2_change_pct)
-#     print('sales_change',sales_change)
-#     print('spend_change',spend_change)
-    
-#     print('cm2_trend',cm2_trend)
-#     print('sales_trend',sales_trend)
-#     print('spend_trend',spend_trend)
-
     formatted_sales_change = f"{format_percentage(sales_change_pct)}"
     formatted_spend_change = f"{format_percentage(spend_change_pct)}"
     
@@ -167,66 +209,69 @@ def sales_spend_move(cm2_change_pct,cm2_last,cm2_this,sales_change_pct,sales_las
         if cm2_trend == "increased":
             if sales_trend == "increased" and spend_trend == "decreased":
                 # Sales Increase & Spend Decrease
-                message += f"<br>This is due to an increase in Net Sales to {format_value(sales_this)} from {format_value(sales_last)}{suffix}, despite a {formatted_spend_change}% decrease in Ad Spend."
+                if s_s_ratio_this > 0:
+                    message += f"<br>This is because your Ad Spend to Net Sales ratio decreased to {s_s_ratio_this}."
             elif sales_change > spend_change and spend_trend == "increased":
                 # Sales Increase > Spend Increase
-                message += f"<br>Despite a {formatted_spend_change}% increase in Ad Spend, Net Sales increased by {formatted_sales_change}%."
+                if s_s_ratio_this > 0:
+                    message += f"<br>This is because your Ad Spend to Net Sales ratio decreased to {s_s_ratio_this}, despite a {formatted_spend_change}% increase in Ad Spend."
             elif sales_change < spend_change and spend_trend == "decreased":
                 # Sales decrease < Spend decrease
-                message += f"<br>Despite a {formatted_spend_change}% decrease in Ad Spend, Net Sales decreased by {formatted_sales_change}%."
+                if (s_s_ratio_this > 0 and s_s_ratio_last > 0) and (s_s_ratio_this != s_s_ratio_last):
+                    message += f"<br>This is because your Ad Spend to Net Sales ratio decreased to {s_s_ratio_this} from {s_s_ratio_last}{suffix}."
             elif sales_trend == "increased" and spend_trend == "steady":
                 # Sales Increase & Steady Spend
-                message += f"<br>This is due to an increase in Net Sales to {format_value(sales_this)} from {format_value(sales_last)}{suffix}, despite no increase in Ad Spend."
+                if (s_s_ratio_this > 0 and s_s_ratio_last > 0) and (s_s_ratio_this != s_s_ratio_last):
+                    message += f"<br>This is because your Ad Spend to Net Sales ratio decreased to {s_s_ratio_this} from {s_s_ratio_last}{suffix}, despite no increase in Ad Spend."
             elif sales_trend == "steady" and spend_trend == "decreased":
                 # Steady Sales & Spend Decrease
-                message += f"<br>This is due to a decrease in Ad Spend to {format_value(spend_this)} from {format_value(spend_last)}{suffix}, despite no decrease in Net Sales."
+                if (s_s_ratio_this > 0 and s_s_ratio_last > 0) and (s_s_ratio_this != s_s_ratio_last):
+                    message += f"<br>This is because your Ad Spend to Net Sales ratio decreased to {s_s_ratio_this} from {s_s_ratio_last}{suffix}, despite no decrease in Net Sales."
             else:
                 message = ''
                 
         elif cm2_trend == "fell":
             if sales_trend == "decreased" and spend_trend == "increased":
                 # Sales Decrease & Spend Increase
-                message += f"<br>This is due to a decrease in Net Sales to {format_value(sales_this)} from {format_value(sales_last)}{suffix}, despite a {formatted_spend_change}% increase in Ad Spend."
+                if s_s_ratio_this > 0:
+                    message += f"<br>This is because your Ad Spend to Net Sales ratio increased to {s_s_ratio_this}."
             elif sales_change < spend_change and spend_trend == "decreased":
                 # Sales decrease > Spend decrease
-                message += f"<br>Despite a {formatted_spend_change}% decrease in Ad Spend, Net Sales decreased by {formatted_sales_change}%."
+                if s_s_ratio_this > 0:
+                    message += f"<br>This is because your Ad Spend to Net Sales ratio increased to {s_s_ratio_this}, despite a {formatted_spend_change}% decrease in Ad Spend."
             elif sales_change < spend_change and spend_trend == "increased":
                 # Sales increase < Spend increase
-                message += f"<br>Despite a {formatted_spend_change}% increase in Ad Spend, Net Sales increased by {formatted_sales_change}%."
+                if (s_s_ratio_this > 0 and s_s_ratio_last > 0) and (s_s_ratio_this != s_s_ratio_last):
+                    message += f"<br>This is because your Ad Spend to Net Sales ratio increased to {s_s_ratio_this} from {s_s_ratio_last}{suffix}."
             elif sales_trend == "steady" and spend_trend == "increased":
                 # Sales Steady & Spend Increase
-                message += f"<br>This is due to an increase in Ad Spend to {format_value(spend_this)} from {format_value(spend_last)}{suffix}, despite no increase in Net Sales."
+                if (s_s_ratio_this > 0 and s_s_ratio_last > 0) and (s_s_ratio_this != s_s_ratio_last):
+                    message += f"<br>This is because your Ad Spend to Net Sales ratio increased to {s_s_ratio_this} from {s_s_ratio_last}{suffix}, despite no increase in Net Sales."
             elif sales_trend == "decreased" and spend_trend == "steady":
                 # Sales Decrease & Steady Spend
-                message += f"<br>This is due to a decrease in Net Sales to {format_value(sales_this)} from {format_value(sales_last)}{suffix}, despite no decrease in Ad Spend."
+                if (s_s_ratio_this > 0 and s_s_ratio_last > 0) and (s_s_ratio_this != s_s_ratio_last):
+                    message += f"<br>This is because your Ad Spend to Net Sales ratio increased to {s_s_ratio_this} from {s_s_ratio_last}{suffix}, despite no decrease in Ad Spend."
             else:
                 message = ''
+            
+        if message != '' and metrics_affected != '':
+            message += f"<br>This also {primary_effect} the {metrics_affected} for the month."
                 
         return message,summary 
     else:
         return '',''
 
-def cogs_sales_move(gp_change_pct,gp_last,gp_this,sales_change_pct,sales_last,sales_this,cogs_change_pct,cogs_last,cogs_this,last_month_name,threshold,moveType='Monthly'):
-#     gp_change_pct = 3
-#     sales_change_pct = 2.10
-#     cogs_change_pct = -26.06
-    
-#     sales_change = 12 
-#     cogs_change = -13
-    
+def cogs_sales_move(gp_change_pct,gp_last,gp_this,sales_change_pct,sales_last,sales_this,cogs_change_pct,cogs_last,cogs_this,last_month_name,metrics_affected,threshold,moveType='Monthly'):
     # Determine trends
     gp_trend = "increased" if gp_change_pct > 0 else "fell"
     sales_trend = "increased" if sales_change_pct > threshold else "decreased" if sales_change_pct < -(threshold) else "steady"
     cogs_trend = "increased" if cogs_change_pct > threshold else "decreased" if cogs_change_pct < -(threshold) else "steady"
-    
-#     print('gp_change_pct',gp_change_pct)
-#     print('sales_change_pct',sales_change_pct)
-#     print('cogs_change_pct',cogs_change_pct)
-    
-#     print('gp_trend',gp_trend)
-#     print('sales_trend',sales_trend)
-#     print('cogs_trend',cogs_trend)
 
+    if gp_this > gp_last:
+        primary_effect = "increased"  # Use 'increased' if primary metric fell
+    else:
+        primary_effect = "reduced"  # Use 'reduced' if primary metric increased
+    
     try:
         formatted_sales_change = f"{abs(sales_change_pct):.1f}" if not (sales_change_pct).is_integer() else f"{abs(sales_change_pct):.0f}"
     except:
@@ -249,19 +294,19 @@ def cogs_sales_move(gp_change_pct,gp_last,gp_this,sales_change_pct,sales_last,sa
             if gp_trend == "fell":
                 if sales_trend == "decreased" and cogs_trend == "increased":
                     # Sales Decrease & COGS Increase
-                    message += f"<br>This is due to an increase in COGS to {format_value(cogs_this)} from {format_value(cogs_last)}, despite a {formatted_sales_change}% decrease in Net Sales.<br>This also reduced the CM1% and CM2% for the month."
+                    message += f"<br>This could be because of higher sales of low margin products"
                 elif sales_trend == "steady" and cogs_trend == "increased":
                     # Sales Steady & COGS Increase
-                    message += f"<br>This is due to an increase in COGS to {format_value(cogs_this)} from {format_value(cogs_last)}, despite no increase in Net Sales.<br>This also reduced the CM1% and CM2% for the month."
+                    message += f"<br>This could be because of higher sales of low margin products"
                 else:
                     message = ''
             elif gp_trend == "increased":
                 if sales_trend == "increased" and cogs_trend == "decreased":
                     # Sales Increase & COGS Decrease
-                    message += f"<br>This is due to a decrease in COGS to {format_value(cogs_this)} from {format_value(cogs_last)}, despite a {formatted_sales_change}% increase in Net Sales.<br>This also reduced the CM1% and CM2% for the month."
+                    message += f"<br>This could be because of higher sales of high margin products"
                 elif sales_trend == "steady" and cogs_trend == "decreased":
                     # Steady Sales & COGS Decrease
-                    message += f"<br>This is due to a decrease in COGS to {format_value(cogs_this)} from {format_value(cogs_last)}, despite no decrease in Net Sales.<br>This also reduced the CM1% and CM2% for the month."
+                    message += f"<br>This could be because of higher sales of high margin products"
                 else:
                     message = ''
                     
@@ -272,21 +317,24 @@ def cogs_sales_move(gp_change_pct,gp_last,gp_this,sales_change_pct,sales_last,sa
             if gp_trend == "fell":
                 if sales_trend == "decreased" and cogs_trend == "increased":
                     # Sales Decrease & COGS Increase
-                    message += f"<br>This is due to an increase in COGS to {format_value(cogs_this)} from {format_value(cogs_last)} at this time last month, despite a {formatted_sales_change}% decrease in Net Sales.<br>This also reduced the CM1% and CM2% for the month."
+                    message += f"<br>This could be because of higher sales of low margin products."
                 elif sales_trend == "steady" and cogs_trend == "increased":
                     # Sales Steady & COGS Increase
-                    message += f"<br>This is due to an increase in COGS to {format_value(cogs_this)} from {format_value(cogs_last)} at this time last month, despite no increase in Net Sales.<br>This also reduced the CM1% and CM2% for the month."
+                    message += f"<br>This could be because of higher sales of low margin products."
                 else:
                     message = ''
             elif gp_trend == "increased":
                 if sales_trend == "increased" and cogs_trend == "decreased":
                     # Sales Increase & COGS Decrease
-                    message += f"<br>This is due to a decrease in COGS to {format_value(cogs_this)} from {format_value(cogs_last)} at this time last month, despite a {formatted_sales_change}% increase in Net Sales.<br>This also reduced the CM1% and CM2% for the month."
+                    message += f"<br>This could be because of higher sales of high margin products."
                 elif sales_trend == "steady" and cogs_trend == "decreased":
                     # Steady Sales & COGS Decrease
-                    message += f"<br>This is due to a decrease in COGS to {format_value(cogs_this)} from {format_value(cogs_last)} at this time last month, despite no decrease in Net Sales.<br>This also reduced the CM1% and CM2% for the month."
+                    message += f"<br>This could be because of higher sales of high margin products."
                 else:
                     message = ''
+            
+    if message != '' and metrics_affected != '':
+        message += f"<br>This also {primary_effect} the {metrics_affected} for the month."
                 
     return message,summary
 
@@ -313,7 +361,7 @@ def primary_secondary_single_move(primary_metric, primary_this, primary_last, se
         
     secondary_metric = extract_label(secondary_metric)
     
-    if primary_metric == 'Sales Growth':
+    if primary_metric == 'Monthly Growth':
         if (primary_change == "increased" and secondary_change == "an increase") or (primary_change == "fell" and secondary_change == "a decrease"):
             pass
         else:
@@ -402,7 +450,7 @@ def primary_secondary_double_move(primary_metric, primary_this, primary_last, se
     secondary_metric_1 = extract_label(secondary_metric_1)
     secondary_metric_2 = extract_label(secondary_metric_2)
     
-    if primary_metric == 'Sales Growth':
+    if primary_metric == 'Monthly Growth':
         if (primary_change == "increased" and secondary_change_1 == "an increase" and secondary_change_2 == "an increase") or (primary_change == "fell" and secondary_change_1 == "a decrease" and secondary_change_2 == "a decrease"):
             pass
         else:
@@ -490,6 +538,14 @@ def getTagline(metric: str, change: str):
             'CM2 %': {
                 'increase': "CM2 % Up",
                 'decrease': "CM2 % Dropped"
+            },
+            'EBITDA Margin': {
+                'increase': "EBITDA Margin Up",
+                'decrease': "EBITDA Margin Dropped"
+            },
+            'Net Cash Margin': {
+                'increase': "Net Cash Margin Up",
+                'decrease': "Net Cash Margin Dropped"
             }
         }
         return tagline_store[metric][change]
@@ -606,33 +662,156 @@ def subset_df(financial_statement_id_mapping,inner_this,inner_last,metric_name1,
     
     return result
 
+def net_cash_move(net_cash_this , net_cash_last, net_cash_change, loan_this, loan_last, sales_this , sales_last, last_month_name ,moveType='Monthly'):
+    netCashMove = ''
+    summary = ''
+    if net_cash_change > 0:
+        trend = "increased"
+    else:
+        trend = "fell"
+       
+    l_s_ratio_this = loan_this / sales_this
+    l_s_ratio_last = loan_last / sales_last
+    
+    l_s_ratio_this = adjust_decimal_corrected(l_s_ratio_this)
+    l_s_ratio_last = adjust_decimal_corrected(l_s_ratio_last)
+    
+    if l_s_ratio_this > l_s_ratio_last:
+        secondary_change = "an increase"
+    else:
+        secondary_change = "a decrease"
+
+    if moveType == 'Monthly':
+        summary = f"Net Cash Margin in {last_month_name} {trend} to <b>{format_percentage(net_cash_this)}%</b> from <b>{format_percentage(net_cash_last)}%</b>."
+        netCashMove = f"Net Cash Margin in {last_month_name} {trend} to {format_percentage(net_cash_this)}% from {format_percentage(net_cash_last)}%."
+        if (l_s_ratio_this > 0 and l_s_ratio_last > 0) and (l_s_ratio_this != l_s_ratio_last):      
+            netCashMove += f"<br>This is due to {secondary_change} in Loan Servicing to Net Sales ratio to {l_s_ratio_this} from {l_s_ratio_last}."
+    else:
+        summary = f"Net Cash Margin this month {trend} to <b>{format_percentage(net_cash_this)}%</b> from <b>{format_percentage(net_cash_last)}%</b> last month."
+        netCashMove = f"Net Cash Margin this month {trend} to {format_percentage(net_cash_this)}% from {format_percentage(net_cash_last)}% last month."
+        if (l_s_ratio_this > 0 and l_s_ratio_last > 0) and (l_s_ratio_this != l_s_ratio_last):
+            netCashMove += f"<br>This is due to {secondary_change} in Loan Servicing to Net Sales ratio to {l_s_ratio_this} from {l_s_ratio_last} at this time last month."
+        
+    return netCashMove, summary
+
+
+def ebitda_single_move(primary_this, primary_last, secondary_metric, secondary_this, secondary_last, sales_this, sales_last, last_month_name, moveType='Monthly'):
+    # Determine the direction of change for the primary metric
+    if primary_this > primary_last:
+        primary_change = "increased"
+    else:
+        primary_change = "fell"
+
+    if moveType != 'Monthly':
+        primary_change_pct = custom_round(getPerChange(primary_last, primary_this))    
+        
+    s1_s_ratio_this = secondary_this / sales_this
+    s1_s_ratio_last = secondary_last / sales_last
+    
+    s1_s_ratio_this = adjust_decimal_corrected(s1_s_ratio_this)
+    s1_s_ratio_last = adjust_decimal_corrected(s1_s_ratio_last)
+    
+    # Determine the direction of change for the secondary metric
+    if s1_s_ratio_this > s1_s_ratio_last:
+        secondary_change = "an increase"
+    else:
+        secondary_change = "a decrease"
+    
+    if moveType == 'Monthly':
+        # Construct the message
+        summary = f"EBITDA Margin in {last_month_name} {primary_change} to <b>{format_percentage(primary_this)}%</b> from <b>{format_percentage(primary_last)}%</b>"
+        message = f"EBITDA Margin in {last_month_name} {primary_change} to {format_percentage(primary_this)}% from {format_percentage(primary_last)}%." 
+        if (s1_s_ratio_this > 0 and s1_s_ratio_last > 0) and (s1_s_ratio_this != s1_s_ratio_last):
+            message += f"<br>This is due to {secondary_change} in {secondary_metric} to Net Sales ratio to {s1_s_ratio_this} from {s1_s_ratio_last}." 
+
+    else:
+        summary = f"EBITDA Margin this month {primary_change} to <b>{format_percentage(primary_this)}%</b> from <b>{format_percentage(primary_last)}%</b> last month"
+        message = f"EBITDA Margin this month {primary_change} to {format_percentage(primary_this)}% from {format_percentage(primary_last)}% last month." 
+        if (s1_s_ratio_this > 0 and s1_s_ratio_last > 0) and (s1_s_ratio_this != s1_s_ratio_last):
+            message += f"<br>This is due to {secondary_change} in {secondary_metric} to Net Sales ratio to {s1_s_ratio_this} from {s1_s_ratio_last} at this time last month." 
+
+    return message,summary
+
+def ebitda_double_move(primary_this, primary_last, secondary_metric_1, secondary_this_1, secondary_last_1, secondary_metric_2, secondary_this_2, secondary_last_2, sales_this, sales_last, last_month_name, moveType = 'Monthly'):
+    # Determine the direction of change for the primary metric
+    if primary_this > primary_last:
+        primary_change = "increased"
+    else:
+        primary_change = "fell"
+    
+    if moveType != 'Monthly':
+        primary_change_pct = custom_round(getPerChange(primary_last, primary_this))
+    
+    s1_s_ratio_this = secondary_this_1 / sales_this
+    s1_s_ratio_last = secondary_last_1 / sales_last
+    
+    s1_s_ratio_this = adjust_decimal_corrected(s1_s_ratio_this)
+    s1_s_ratio_last = adjust_decimal_corrected(s1_s_ratio_last)
+    
+    s2_s_ratio_this = secondary_this_2 / sales_this
+    s2_s_ratio_last = secondary_last_2 / sales_last
+    
+    s2_s_ratio_this = adjust_decimal_corrected(s2_s_ratio_this)
+    s2_s_ratio_last = adjust_decimal_corrected(s2_s_ratio_last)
+    
+    # Determine the direction of change for the first secondary metric
+    if s1_s_ratio_this > s1_s_ratio_last:
+        secondary_change_1 = "an increase"
+    else:
+        secondary_change_1 = "a decrease"
+    
+    # Determine the direction of change for the second secondary metric
+    if s2_s_ratio_this > s2_s_ratio_last:
+        secondary_change_2 = "an increase"
+    else:
+        secondary_change_2 = "a decrease"
+    
+    if moveType == 'Monthly':
+        # Construct the message
+        summary = f"EBITDA Margin in {last_month_name} {primary_change} to <b>{format_percentage(primary_this)}%</b> from <b>{format_percentage(primary_last)}%</b>"
+        message = f"EBITDA Margin in {last_month_name} {primary_change} to {format_percentage(primary_this)}% from {format_percentage(primary_last)}%." 
+        if (s1_s_ratio_this > 0 and s1_s_ratio_last > 0 and s2_s_ratio_this > 0 and s2_s_ratio_last > 0) and (s1_s_ratio_this != s1_s_ratio_last) and (s2_s_ratio_this != s2_s_ratio_last):
+            message += f"<br>This is due to {secondary_change_1} in {secondary_metric_1} to Net Sales ratio to {s1_s_ratio_this} from {s1_s_ratio_last} " \
+                       f"or {secondary_change_2} in {secondary_metric_2} to Net Sales ratio to {s2_s_ratio_this} from {s2_s_ratio_last}." 
+
+    else:
+        summary = f"EBITDA Margin this month {primary_change} to <b>{format_percentage(primary_this)}%</b> from <b>{format_percentage(primary_last)}%</b> last month"
+        message = f"EBITDA Margin this month {primary_change} to {format_percentage(primary_this)}% from {format_percentage(primary_last)}% last month." 
+        if (s1_s_ratio_this > 0 and s1_s_ratio_last > 0 and s2_s_ratio_this > 0 and s2_s_ratio_last > 0) and (s1_s_ratio_this != s1_s_ratio_last) and (s2_s_ratio_this != s2_s_ratio_last):
+            message += f"<br>This is due to {secondary_change_1} in {secondary_metric_1} to Net Sales ratio to {s1_s_ratio_this} from {s1_s_ratio_last} at this time last month " \
+                       f"or {secondary_change_2} in {secondary_metric_2} to Net Sales ratio to {s2_s_ratio_this} from {s2_s_ratio_last} at this time last month." 
+    
+    return message,summary
+
 def calculate_growth(financial_statement_values, parsed_data, mid_financial_statement_values):
     #Thresholds
     growth_threshold = 5
     gp_threshold = 5
     cm1_threshold = 5
     cm2_threshold = 3
+    ebitda_threshold = 3
+    net_cash_threshold = 3
     
-    # For moves testing
+#     For moves testing
 
-    # #Dates for manipulation
-    # # Current Date in "mm-yyyy"
-    # current_month = (datetime.now()- timedelta(days=30)).strftime('%m-%Y')
+#     #Dates for manipulation
+#     # Current Date in "mm-yyyy"
+#     current_month = (datetime.now()- timedelta(days=60)).strftime('%m-%Y')
 
-    # # Previous Month-Year
-    # previous_month_year = ((datetime.now()- timedelta(days=30)).replace(day=1) - timedelta(days=1)).strftime('%m-%Y')
+#     # Previous Month-Year
+#     previous_month_year = ((datetime.now()- timedelta(days=60)).replace(day=1) - timedelta(days=1)).strftime('%m-%Y')
 
-    # # Before Previous Month-Year
-    # before_previous_month_year = ((datetime.now()- timedelta(days=30)).replace(day=1) - timedelta(days=1)).replace(day=1) - timedelta(days=1)
-    # before_previous_month_year = before_previous_month_year.strftime('%m-%Y')
+#     # Before Previous Month-Year
+#     before_previous_month_year = ((datetime.now()- timedelta(days=60)).replace(day=1) - timedelta(days=1)).replace(day=1) - timedelta(days=1)
+#     before_previous_month_year = before_previous_month_year.strftime('%m-%Y')
 
-    # two_months_before_previous_month_year = (((datetime.now()- timedelta(days=30)).replace(day=1) - timedelta(days=1)).replace(day=1) - timedelta(days=1)).replace(day=1) - timedelta(days=1)
-    # two_months_before_previous_month_year = two_months_before_previous_month_year.strftime('%m-%Y')
+#     two_months_before_previous_month_year = (((datetime.now()- timedelta(days=60)).replace(day=1) - timedelta(days=1)).replace(day=1) - timedelta(days=1)).replace(day=1) - timedelta(days=1)
+#     two_months_before_previous_month_year = two_months_before_previous_month_year.strftime('%m-%Y')
     
-    # print("Current Month (mm-yyyy):", current_month)
-    # print("Previous Month-Year (mm-yyyy):", previous_month_year)
-    # print("Before Previous Month-Year (mm-yyyy):", before_previous_month_year)
-    # print("Two Months Before Previous Month-Year (mm-yyyy):", two_months_before_previous_month_year)
+#     print("Current Month (mm-yyyy):", current_month)
+#     print("Previous Month-Year (mm-yyyy):", previous_month_year)
+#     print("Before Previous Month-Year (mm-yyyy):", before_previous_month_year)
+#     print("Two Months Before Previous Month-Year (mm-yyyy):", two_months_before_previous_month_year)
     
 
     # Current Date in "mm-yyyy"
@@ -696,7 +875,9 @@ def calculate_growth(financial_statement_values, parsed_data, mid_financial_stat
             'Monthly Growth %': {},
             'Gross Profit %': {},
             'CM1 %' : {},
-            'CM2 %' : {}
+            'CM2 %' : {},
+            'EBITDA Margin' : {},
+            'Net Cash Margin' : {}
         }
     
     #Mid month data 
@@ -748,10 +929,75 @@ def calculate_growth(financial_statement_values, parsed_data, mid_financial_stat
     last_month_name = formatted_date
     
     try:
+        gp_this = valuegetter(outer_this,'name','Gross Profit %','value') 
+        gp_last = valuegetter(outer_last,'name','Gross Profit %','value')
+        gp_change = getPerChange(gp_last,gp_this)
+        
+        cm1_this = valuegetter(outer_this,'name','CM1 %','value') 
+        cm1_last = valuegetter(outer_last,'name','CM1 %','value')
+        cm1_change = getPerChange(cm1_last,cm1_this)
+        
+        cm2_this = valuegetter(outer_this,'name','CM2 %','value') 
+        cm2_last = valuegetter(outer_last,'name','CM2 %','value')
+        cm2_change = getPerChange(cm2_last,cm2_this)
+        
+        ebitda_this = valuegetter(outer_this,'name','EBITDA Margin','value') 
+        ebitda_last = valuegetter(outer_last,'name','EBITDA Margin','value')
+        ebitda_change = getPerChange(ebitda_last,ebitda_this)
+        
+        nc_this = valuegetter(outer_this,'name','Net Cash Margin','value') 
+        nc_last = valuegetter(outer_last,'name','Net Cash Margin','value')
+        nc_change = getPerChange(nc_last,nc_this)
+        
+        
+        primary_change_dict = {
+            "Gross Profit %" : gp_change,
+            "CM1 %" : cm1_change,
+            "CM2 %" : cm2_change,
+            "EBITDA Margin" : ebitda_change,
+            "Net Cash Margin" : nc_change
+        }
+    except Exception as e:
+        print(f'Error in getting values(primary_change_dict) of statement:{e}')
+    
+    if midMonthData:
+        try:
+            gp_this = valuegetter(mid_outer_this,'name','Gross Profit %','value') 
+            gp_last = valuegetter(outer_this,'name','Gross Profit %','value')
+            gp_change = getPerChange(gp_last,gp_this)
+            
+            cm1_this = valuegetter(mid_outer_this,'name','CM1 %','value') 
+            cm1_last = valuegetter(outer_this,'name','CM1 %','value')
+            cm1_change = getPerChange(cm1_last,cm1_this)
+            
+            cm2_this = valuegetter(mid_outer_this,'name','CM2 %','value') 
+            cm2_last = valuegetter(outer_this,'name','CM2 %','value')
+            cm2_change = getPerChange(cm2_last,cm2_this)
+            
+            ebitda_this = valuegetter(mid_outer_this,'name','EBITDA Margin','value') 
+            ebitda_last = valuegetter(outer_this,'name','EBITDA Margin','value')
+            ebitda_change = getPerChange(ebitda_last,ebitda_this)
+            
+            nc_this = valuegetter(mid_outer_this,'name','Net Cash Margin','value') 
+            nc_last = valuegetter(outer_this,'name','Net Cash Margin','value')
+            nc_change = getPerChange(nc_last,nc_this)
+            
+            
+            primary_change_mid_dict = {
+                "Gross Profit %" : gp_change,
+                "CM1 %" : cm1_change,
+                "CM2 %" : cm2_change,
+                "EBITDA Margin" : ebitda_change,
+                "Net Cash Margin" : nc_change
+            }
+        except Exception as e:
+            print(f'Error in getting values(primary_change_mid_dict) of midmonth statement:{e}')
+    
+    try:
         if not midMonthData:
             # Monthly Growth % Move
             primary_metric = "Monthly Growth %"
-            primary_metric_name = "Sales Growth"
+            primary_metric_name = "Monthly Growth"
             primary_this = valuegetter(outer_this,'name',primary_metric,'value') 
             primary_last = valuegetter(outer_last,'name',primary_metric,'value') 
 
@@ -764,6 +1010,8 @@ def calculate_growth(financial_statement_values, parsed_data, mid_financial_stat
             else:
                 secondary_metrics_value = False
 
+            mt_effected = affected_metrics(primary_change_dict, growth_rate_change, ['Gross Profit %', 'CM1 %', 'CM2 %', 'EBITDA Margin', 'Net Cash Margin'])                        
+            
             if abs(growth_rate_change) >= growth_threshold:
 
                 result_growth = growth_subset_df(financial_statement_id_mapping,inner_this,inner_last,inner_before_last,'','Monthly Growth %',growth_rate_change)
@@ -775,9 +1023,7 @@ def calculate_growth(financial_statement_values, parsed_data, mid_financial_stat
 
                     secondary_this = getPerChange(secondary_last_value, secondary_this_value) 
                     secondary_last = getPerChange(secondary_before_last_value, secondary_last_value) 
-
-                    mt_effected = 'Gross Profit %, CM1 % and CM2 %'        
-
+      
                     percentage_growth_move, summary_growth_move = primary_secondary_single_move(primary_metric_name, primary_this, primary_last, secondary_metric, secondary_this, secondary_last, mt_effected, last_month_name,secondary_metrics=secondary_metrics_value)
         #             print(percentage_growth_move)
 
@@ -798,8 +1044,6 @@ def calculate_growth(financial_statement_values, parsed_data, mid_financial_stat
                     secondary_this_2 = getPerChange(secondary_last_value_2, secondary_this_value_2) 
                     secondary_last_2 = getPerChange(secondary_before_last_value_2, secondary_last_value_2)
 
-                    mt_effected = 'Gross Profit %, CM1 % and CM2 %'
-
                     percentage_growth_move, summary_growth_move = primary_secondary_double_move(primary_metric_name, primary_this, primary_last, secondary_metric_1, secondary_this_1, secondary_last_1, secondary_metric_2, secondary_this_2, secondary_last_2, mt_effected, last_month_name,secondary_metrics=secondary_metrics_value)
         #             print(percentage_growth_move)
 
@@ -817,7 +1061,7 @@ def calculate_growth(financial_statement_values, parsed_data, mid_financial_stat
         if midMonthData:
             # Mid Monthly Move
             primary_metric = "Monthly Growth %"
-            primary_metric_name = "Sales Growth"
+            primary_metric_name = "Monthly Growth"
             primary_this = valuegetter(mid_outer_this,'name',primary_metric,'value') 
             primary_last = valuegetter(outer_this,'name',primary_metric,'value') 
 
@@ -831,6 +1075,8 @@ def calculate_growth(financial_statement_values, parsed_data, mid_financial_stat
             else:
                 secondary_metrics_value = False
 
+            mt_effected = affected_metrics(primary_change_mid_dict, growth_rate_change, ['Gross Profit %', 'CM1 %', 'CM2 %', 'EBITDA Margin', 'Net Cash Margin'])                        
+            
             if abs(growth_rate_change) >= growth_threshold:
 
                 result_growth = growth_subset_df(financial_statement_id_mapping,mid_inner_this,mid_inner_last,inner_before_last,'','Monthly Growth %',growth_rate_change)
@@ -842,9 +1088,7 @@ def calculate_growth(financial_statement_values, parsed_data, mid_financial_stat
                     secondary_before_last_value = valuegetter(mid_inner_before_last,'fsmName',secondary_metric,'finalValue') 
 
                     secondary_this = getPerChange(secondary_last_value, secondary_this_value) 
-                    secondary_last = getPerChange(secondary_before_last_value, secondary_last_value) 
-
-                    mt_effected = 'Gross Profit %, CM1 % and CM2 %'        
+                    secondary_last = getPerChange(secondary_before_last_value, secondary_last_value)  
 
                     mid_percentage_growth_move, mid_summary_growth_move = primary_secondary_single_move(primary_metric_name, primary_this, primary_last, secondary_metric, secondary_this, secondary_last, mt_effected, last_month_name,moveType='MidMonth',secondary_metrics=secondary_metrics_value)
                 #             print(percentage_growth_move)
@@ -865,9 +1109,6 @@ def calculate_growth(financial_statement_values, parsed_data, mid_financial_stat
 
                     secondary_this_2 = getPerChange(secondary_last_value_2, secondary_this_value_2) 
                     secondary_last_2 = getPerChange(secondary_before_last_value_2, secondary_last_value_2)
-
-
-                    mt_effected = 'Gross Profit %, CM1 % and CM2 %'
 
                     mid_percentage_growth_move, mid_summary_growth_move = primary_secondary_double_move(primary_metric_name, primary_this, primary_last, secondary_metric_1, secondary_this_1, secondary_last_1, secondary_metric_2, secondary_this_2, secondary_last_2, mt_effected, last_month_name,moveType='MidMonth',secondary_metrics=secondary_metrics_value)
                 #             print(percentage_growth_move)
@@ -904,9 +1145,11 @@ def calculate_growth(financial_statement_values, parsed_data, mid_financial_stat
             spend_change_pct = getPerChange(spend_last, spend_this)
             cogs_change_pct = getPerChange(cogs_last, cogs_this) 
 
+            mt_effected = affected_metrics(primary_change_dict, gp_change_pct, ['CM1 %', 'CM2 %', 'EBITDA Margin', 'Net Cash Margin'])                        
+
             if abs(gp_change_pct) >= gp_threshold:
 
-                gp_percentage_move, gp_summary_move = cogs_sales_move(gp_change_pct,gp_last,gp_this,sales_change_pct,sales_last,sales_this,cogs_change_pct,cogs_last,cogs_this,last_month_name,5)
+                gp_percentage_move, gp_summary_move = cogs_sales_move(gp_change_pct,gp_last,gp_this,sales_change_pct,sales_last,sales_this,cogs_change_pct,cogs_last,cogs_this,last_month_name,mt_effected,5)
                 if gp_percentage_move != '':
 
                     gp_move_direction = 'increase' if gp_this > gp_last else 'decrease'
@@ -935,9 +1178,11 @@ def calculate_growth(financial_statement_values, parsed_data, mid_financial_stat
             spend_change_pct = getPerChange(spend_last, spend_this)
             cogs_change_pct = getPerChange(cogs_last, cogs_this) 
 
+            mt_effected = affected_metrics(primary_change_mid_dict, gp_change_pct, ['CM1 %', 'CM2 %', 'EBITDA Margin', 'Net Cash Margin'])                        
+            
             if abs(gp_change_pct) >= gp_threshold:
 
-                gp_percentage_move, gp_summary_move = cogs_sales_move(gp_change_pct,gp_last,gp_this,sales_change_pct,sales_last,sales_this,cogs_change_pct,cogs_last,cogs_this,last_month_name,5,moveType='Mid Month')
+                gp_percentage_move, gp_summary_move = cogs_sales_move(gp_change_pct,gp_last,gp_this,sales_change_pct,sales_last,sales_this,cogs_change_pct,cogs_last,cogs_this,last_month_name,mt_effected,5,moveType='Mid Month')
                 if gp_percentage_move != '':
 
                     gp_move_direction = 'increase' if gp_this > gp_last else 'decrease'
@@ -961,6 +1206,8 @@ def calculate_growth(financial_statement_values, parsed_data, mid_financial_stat
 
             cm1_rate_change = getPerChange(primary_last, primary_this)
 
+            mt_effected = affected_metrics(primary_change_dict, cm1_rate_change, ['CM2 %', 'EBITDA Margin', 'Net Cash Margin'])                        
+            
             if abs(cm1_rate_change) >= cm1_threshold:
 
                 result_cm_1 = subset_df(financial_statement_id_mapping,inner_this,inner_last,'Gross Profit %','CM1',cm1_rate_change)
@@ -968,7 +1215,6 @@ def calculate_growth(financial_statement_values, parsed_data, mid_financial_stat
                     secondary_metric = list(result_cm_1.keys())[0]
                     secondary_this = inner_this[inner_this['fsmName'] == secondary_metric]['finalValue'].iloc[0]
                     secondary_last = inner_last[inner_last['fsmName'] == secondary_metric]['finalValue'].iloc[0]
-                    mt_effected = 'CM2 %'
 
                     percentage_cm1_move, summary_cm1_move = primary_secondary_single_move(primary_metric, primary_this, primary_last, secondary_metric, secondary_this, secondary_last, mt_effected, last_month_name)
         #             print(percentage_cm1_move)
@@ -980,7 +1226,6 @@ def calculate_growth(financial_statement_values, parsed_data, mid_financial_stat
                     secondary_metric_2 = list(result_cm_1.keys())[1]
                     secondary_this_2 = inner_this[inner_this['fsmName'] == secondary_metric_2]['finalValue'].iloc[0]
                     secondary_last_2 = inner_last[inner_last['fsmName'] == secondary_metric_2]['finalValue'].iloc[0]
-                    mt_effected = 'CM2 %'
 
                     percentage_cm1_move, summary_cm1_move = primary_secondary_double_move(primary_metric, primary_this, primary_last, secondary_metric_1, secondary_this_1, secondary_last_1, secondary_metric_2, secondary_this_2, secondary_last_2, mt_effected, last_month_name)
         #             print(percentage_cm1_move)
@@ -1005,14 +1250,15 @@ def calculate_growth(financial_statement_values, parsed_data, mid_financial_stat
 
             cm1_rate_change = getPerChange(primary_last, primary_this)
             
+            mt_effected = affected_metrics(primary_change_mid_dict, cm1_rate_change, ['CM2 %', 'EBITDA Margin', 'Net Cash Margin'])                        
+            
             if abs(cm1_rate_change) >= cm1_threshold:
 
                 result_cm1 = subset_df(financial_statement_id_mapping,mid_inner_this,mid_inner_last,'Gross Profit %','CM1',cm1_rate_change)
                 if len(result_cm1) == 1:
                     secondary_metric = list(result_cm1.keys())[0]
                     secondary_this = valuegetter(mid_inner_this,'fsmName',secondary_metric,'finalValue')
-                    secondary_last = valuegetter(mid_inner_last,'fsmName',secondary_metric,'finalValue')
-                    mt_effected = 'CM2 %'        
+                    secondary_last = valuegetter(mid_inner_last,'fsmName',secondary_metric,'finalValue')      
 
                     mid_percentage_cm1_move, mid_summary_cm1_move  = primary_secondary_single_move(primary_metric, primary_this, primary_last, secondary_metric, secondary_this, secondary_last, mt_effected, last_month_name,moveType='MidMonth')
 
@@ -1023,7 +1269,6 @@ def calculate_growth(financial_statement_values, parsed_data, mid_financial_stat
                     secondary_metric_2 = list(result_cm1.keys())[1]
                     secondary_this_2 = valuegetter(mid_inner_this,'fsmName',secondary_metric_2,'finalValue')
                     secondary_last_2 = valuegetter(mid_inner_last,'fsmName',secondary_metric_2,'finalValue')
-                    mt_effected = 'CM2 %'
 
                     mid_percentage_cm1_move, mid_summary_cm1_move  = primary_secondary_double_move(primary_metric, primary_this, primary_last, secondary_metric_1, secondary_this_1, secondary_last_1, secondary_metric_2, secondary_this_2, secondary_last_2, mt_effected, last_month_name,moveType='MidMonth')
 
@@ -1066,9 +1311,11 @@ def calculate_growth(financial_statement_values, parsed_data, mid_financial_stat
                 sales_change_pct = getPerChange(sales_last, sales_this)
                 spend_change_pct = getPerChange(spend_last, spend_this)
 
+                mt_effected = affected_metrics(primary_change_dict, cm2_change_pct, ['EBITDA Margin', 'Net Cash Margin'])
+                
                 if abs(cm2_change_pct) >= cm2_threshold:
 
-                    cm2_percentage_move, cm2_summary_move = sales_spend_move(cm2_change_pct,cm2_last,cm2_this,sales_change_pct,sales_last,sales_this,spend_change_pct,spend_last,spend_this,last_month_name,5)
+                    cm2_percentage_move, cm2_summary_move = sales_spend_move(cm2_change_pct,cm2_last,cm2_this,sales_change_pct,sales_last,sales_this,spend_change_pct,spend_last,spend_this,last_month_name,mt_effected,5)
                     if cm2_percentage_move != '':
                         cm2_move_direction = 'increase' if cm2_this > cm2_last else 'decrease'
 
@@ -1085,6 +1332,7 @@ def calculate_growth(financial_statement_values, parsed_data, mid_financial_stat
                 primary_last = valuegetter(outer_last,'name',primary_metric,'value')
 
                 cm2_rate_change = getPerChange(primary_last, primary_this)
+                mt_effected = affected_metrics(primary_change_dict, cm2_rate_change, ['EBITDA Margin', 'Net Cash Margin'])  
 
                 if abs(cm2_rate_change) >= cm2_threshold:
 
@@ -1093,7 +1341,6 @@ def calculate_growth(financial_statement_values, parsed_data, mid_financial_stat
                         secondary_metric = list(result_cm_2.keys())[0]
                         secondary_this = inner_this[inner_this['fsmName'] == secondary_metric]['finalValue'].iloc[0]
                         secondary_last = inner_last[inner_last['fsmName'] == secondary_metric]['finalValue'].iloc[0]
-                        mt_effected = ''
 
                         percentage_cm2_move, summary_cm2_move = primary_secondary_single_move(primary_metric, primary_this, primary_last, secondary_metric, secondary_this, secondary_last, mt_effected, last_month_name)
 
@@ -1103,9 +1350,8 @@ def calculate_growth(financial_statement_values, parsed_data, mid_financial_stat
                         secondary_last_1 = inner_last[inner_last['fsmName'] == secondary_metric_1]['finalValue'].iloc[0]
                         secondary_metric_2 = list(result_cm_2.keys())[1]
                         secondary_this_2 = inner_this[inner_this['fsmName'] == secondary_metric_2]['finalValue'].iloc[0]
-                        secondary_last_2 = inner_last[inner_last['fsmName'] == secondary_metric_2]['finalValue'].iloc[0]
-                        mt_effected = ''
-
+                        secondary_last_2 = inner_last[inner_last['fsmName'] == secondary_metric_2]['finalValue'].iloc[0]                      
+                        
                         percentage_cm2_move, summary_cm2_move = primary_secondary_double_move(primary_metric, primary_this, primary_last, secondary_metric_1, secondary_this_1, secondary_last_1, secondary_metric_2, secondary_this_2, secondary_last_2, mt_effected, last_month_name)
 
                     cm2_move_direction = 'increase' if primary_this > primary_last else 'decrease'
@@ -1136,10 +1382,12 @@ def calculate_growth(financial_statement_values, parsed_data, mid_financial_stat
                 cm2_change_pct = getPerChange(cm2_last, cm2_this)
                 sales_change_pct = getPerChange(sales_last, sales_this)
                 spend_change_pct = getPerChange(spend_last, spend_this)
+                
+                mt_effected = affected_metrics(primary_change_mid_dict, cm2_change_pct, ['EBITDA Margin', 'Net Cash Margin'])                        
 
                 if abs(cm2_change_pct) >= cm2_threshold:
 
-                    cm2_percentage_move, cm2_summary_move = sales_spend_move(cm2_change_pct,cm2_last,cm2_this,sales_change_pct,sales_last,sales_this,spend_change_pct,spend_last,spend_this,last_month_name,5,moveType='Mid Month')
+                    cm2_percentage_move, cm2_summary_move = sales_spend_move(cm2_change_pct,cm2_last,cm2_this,sales_change_pct,sales_last,sales_this,spend_change_pct,spend_last,spend_this,last_month_name,mt_effected,5,moveType='Mid Month')
                     if cm2_percentage_move != '':
                         cm2_move_direction = 'increase' if cm2_this > cm2_last else 'decrease'
 
@@ -1157,14 +1405,15 @@ def calculate_growth(financial_statement_values, parsed_data, mid_financial_stat
 
                 cm2_rate_change = getPerChange(primary_last, primary_this)
 
+                mt_effected = affected_metrics(primary_change_mid_dict, cm2_rate_change, ['EBITDA Margin', 'Net Cash Margin'])                        
+                
                 if abs(cm2_rate_change) >= cm2_threshold:
 
                     result_cm2 = subset_df(financial_statement_id_mapping,mid_inner_this,mid_inner_last,'CM1 %','CM2',cm2_rate_change)
                     if len(result_cm2) == 1:
                         secondary_metric = list(result_cm2.keys())[0]
                         secondary_this = valuegetter(mid_inner_this,'fsmName',secondary_metric,'finalValue')
-                        secondary_last = valuegetter(mid_inner_last,'fsmName',secondary_metric,'finalValue')
-                        mt_effected = 'CM2 %'        
+                        secondary_last = valuegetter(mid_inner_last,'fsmName',secondary_metric,'finalValue')      
 
                         mid_percentage_cm2_move, mid_summary_cm2_move = primary_secondary_single_move(primary_metric, primary_this, primary_last, secondary_metric, secondary_this, secondary_last, mt_effected, last_month_name,moveType='MidMonth')
 
@@ -1175,7 +1424,6 @@ def calculate_growth(financial_statement_values, parsed_data, mid_financial_stat
                         secondary_metric_2 = list(result_cm2.keys())[1]
                         secondary_this_2 = valuegetter(mid_inner_this,'fsmName',secondary_metric_2,'finalValue')
                         secondary_last_2 = valuegetter(mid_inner_last,'fsmName',secondary_metric_2,'finalValue')
-                        mt_effected = ''
 
                         mid_percentage_cm2_move, mid_summary_cm2_move = primary_secondary_double_move(primary_metric, primary_this, primary_last, secondary_metric_1, secondary_this_1, secondary_last_1, secondary_metric_2, secondary_this_2, secondary_last_2, mt_effected, last_month_name,moveType='MidMonth')
 
@@ -1192,6 +1440,154 @@ def calculate_growth(financial_statement_values, parsed_data, mid_financial_stat
 
     except Exception as e:
         print(f'Error in CM2 % Move: {e}')        
+#     return inner_df  
+    try:
+        if not midMonthData:
+            # EBITDA Margin Move
+            primary_metric = "EBITDA Margin"
+            primary_this = valuegetter(outer_this,'name',primary_metric,'value') 
+            primary_last = valuegetter(outer_last,'name',primary_metric,'value')
+            
+            sales_this = valuegetter(outer_this,'name','Net Sales','value') 
+            sales_last = valuegetter(outer_last,'name','Net Sales','value')
+            
+            ebitda_change = getPerChange(primary_last, primary_this)
+            if abs(ebitda_change) >= ebitda_threshold:
+
+                result_ebitda = subset_df(financial_statement_id_mapping,inner_this,inner_last,'CM2 %','EBITDA',ebitda_change)
+                
+                if len(result_ebitda) == 1:
+                    secondary_metric = list(result_ebitda.keys())[0]
+                    secondary_this = inner_this[inner_this['fsmName'] == secondary_metric]['finalValue'].iloc[0]
+                    secondary_last = inner_last[inner_last['fsmName'] == secondary_metric]['finalValue'].iloc[0]
+      
+                    percentage_ebitda_move, summary_ebitda_move = ebitda_single_move(primary_this, primary_last, secondary_metric, secondary_this, secondary_last, sales_this, sales_last, last_month_name)
+        #             print(percentage_ebitda_move)
+
+                if len(result_ebitda) == 2: 
+                    secondary_metric_1 = list(result_ebitda.keys())[0]
+                    secondary_this_1 = inner_this[inner_this['fsmName'] == secondary_metric_1]['finalValue'].iloc[0]
+                    secondary_last_1 = inner_last[inner_last['fsmName'] == secondary_metric_1]['finalValue'].iloc[0]
+                    secondary_metric_2 = list(result_ebitda.keys())[1]
+                    secondary_this_2 = inner_this[inner_this['fsmName'] == secondary_metric_2]['finalValue'].iloc[0]
+                    secondary_last_2 = inner_last[inner_last['fsmName'] == secondary_metric_2]['finalValue'].iloc[0]
+
+                    percentage_ebitda_move, summary_ebitda_move = ebitda_double_move(primary_this, primary_last, secondary_metric_1, secondary_this_1, secondary_last_1, secondary_metric_2, secondary_this_2, secondary_last_2, sales_this, sales_last, last_month_name)
+        #             print(percentage_ebitda_move)
+
+                ebitda_move_direction = 'increase' if primary_this > primary_last else 'decrease'
+
+                if (len(result_ebitda) == 1) or (len(result_ebitda) == 2):
+                    moves['EBITDA Margin'] = insightDict(
+                                    'EBITDA Margin', 
+                                    percentage_ebitda_move, 
+                                    summary_ebitda_move,
+                                    ebitda_move_direction,
+                                    0
+                                )
+
+            
+        if midMonthData:
+            # Mid Monthly Move
+            primary_metric = "EBITDA Margin"
+            primary_this = valuegetter(mid_outer_this,'name',primary_metric,'value') 
+            primary_last = valuegetter(outer_this,'name',primary_metric,'value')
+
+            sales_this = valuegetter(mid_outer_this,'name','Net Sales','value') 
+            sales_last = valuegetter(mid_outer_last,'name','Net Sales','value')
+            
+            ebitda_change = getPerChange(primary_last, primary_this)
+            
+            if abs(ebitda_change) >= ebitda_threshold:
+
+                result_ebitda = subset_df(financial_statement_id_mapping,mid_inner_this,mid_inner_last,'CM2 %','EBITDA',ebitda_change)
+                if len(result_ebitda) == 1:
+                    secondary_metric = list(result_ebitda.keys())[0]
+                    secondary_this = valuegetter(mid_inner_this,'fsmName',secondary_metric,'finalValue')
+                    secondary_last = valuegetter(mid_inner_last,'fsmName',secondary_metric,'finalValue') 
+
+                    mid_percentage_ebitda_move, mid_summary_ebitda_move  = ebitda_single_move(primary_this, primary_last, secondary_metric, secondary_this, secondary_last, sales_this, sales_last, last_month_name, moveType='MidMonth')
+
+                if len(result_ebitda) == 2:
+                    secondary_metric_1 = list(result_ebitda.keys())[0]
+                    secondary_this_1 = valuegetter(mid_inner_this,'fsmName',secondary_metric_1,'finalValue') 
+                    secondary_last_1 = valuegetter(mid_inner_last,'fsmName',secondary_metric_1,'finalValue')
+                    secondary_metric_2 = list(result_ebitda.keys())[1]
+                    secondary_this_2 = valuegetter(mid_inner_this,'fsmName',secondary_metric_2,'finalValue')
+                    secondary_last_2 = valuegetter(mid_inner_last,'fsmName',secondary_metric_2,'finalValue')
+
+                    mid_percentage_ebitda_move, mid_summary_ebitda_move  = ebitda_double_move(primary_this, primary_last, secondary_metric_1, secondary_this_1, secondary_last_1, secondary_metric_2, secondary_this_2, secondary_last_2, sales_this, sales_last, last_month_name, moveType='MidMonth')
+
+                mid_ebitda_move_direction = 'increase' if primary_this > primary_last else 'decrease'
+                
+                if (len(result_ebitda) == 1) or (len(result_ebitda) == 2):
+                    moves['EBITDA Margin'] = insightDict(
+                                'EBITDA Margin', 
+                                mid_percentage_ebitda_move, 
+                                mid_summary_ebitda_move,
+                                mid_ebitda_move_direction,
+                                1
+                            )            
+    except Exception as e:
+        print(f'Error in EBITDA Margin Move: {e}')
+        
+    
+    try:
+        if not midMonthData:
+            # Net Cash Margin Move
+            net_cash_metric = 'Net Cash Margin'
+            net_cash_this = valuegetter(outer_this,'name',net_cash_metric,'value') 
+            net_cash_last = valuegetter(outer_last,'name',net_cash_metric,'value')
+            
+            loan_this = valuegetter(outer_this,'name','Loan Servicing','value')
+            loan_last = valuegetter(outer_last,'name','Loan Servicing','value')
+
+            sales_this = valuegetter(outer_this,'name','Net Sales','value') 
+            sales_last = valuegetter(outer_last,'name','Net Sales','value')
+            
+            net_cash_change = getPerChange(net_cash_last, net_cash_this)
+            if abs(net_cash_change) >= net_cash_threshold:
+                percentage_net_cash_move, summary_net_cash_move = net_cash_move(net_cash_this , net_cash_last, net_cash_change, loan_this, loan_last, sales_this , sales_last, last_month_name )
+
+                net_cash_move_direction = 'increase' if net_cash_this > net_cash_last else 'decrease'
+
+                moves['Net Cash Margin'] = insightDict(
+                                'Net Cash Margin', 
+                                percentage_net_cash_move, 
+                                summary_net_cash_move,
+                                net_cash_move_direction,
+                                0
+                            )
+
+            
+        if midMonthData:
+            # Mid Monthly Move
+            net_cash_metric = 'Net Cash Margin'
+            net_cash_this = valuegetter(mid_outer_this,'name',net_cash_metric,'value') 
+            net_cash_last = valuegetter(outer_this,'name',net_cash_metric,'value')
+            
+            loan_this = valuegetter(mid_outer_this,'name','Loan Servicing','value') 
+            loan_last = valuegetter(mid_outer_last,'name','Loan Servicing','value')
+
+            sales_this = valuegetter(mid_outer_this,'name','Net Sales','value') 
+            sales_last = valuegetter(mid_outer_last,'name','Net Sales','value')
+            
+            net_cash_change = getPerChange(net_cash_last, net_cash_this)
+            
+            if abs(net_cash_change) >= net_cash_threshold:
+                mid_percentage_net_cash_move, mid_summary_net_cash_move  = net_cash_move(net_cash_this , net_cash_last, net_cash_change, loan_this, loan_last, sales_this , sales_last, last_month_name , moveType='MidMonth')
+                               
+                mid_net_cash_move_direction = 'increase' if net_cash_this > net_cash_last else 'decrease'
+
+                moves['Net Cash Margin'] = insightDict(
+                            'Net Cash Margin', 
+                            mid_percentage_net_cash_move, 
+                            mid_summary_net_cash_move,
+                            mid_net_cash_move_direction,
+                            1
+                        )            
+    except Exception as e:
+        print(f'Error in Net Cash Margin Move: {e}')
         
     for move in financialStatementMoves:
         label = move["label"]
