@@ -10,9 +10,9 @@ def get_direct_formulae():
         'CM1 %': '(CM1/Net Sales)*100',
         'CM2': 'CM1-Ad Spend-Platform Commission-Additional Cost',
         'CM2 %': '(CM2/Net Sales)*100',
-        'EBIDTA': 'CM2 - Operating Expenses',
-        'EBIDTA Margin': '(EBIDTA/Net Sales)*100',
-        'Net Cash': 'EBIDTA - Loan Servicing',
+        'EBITDA': 'CM2 - Operating Expenses',
+        'EBITDA Margin': '(EBITDA/Net Sales)*100',
+        'Net Cash': 'EBITDA - Loan Servicing',
         'Net Cash Margin': '(Net Cash/Net Sales)*100',
     }
 
@@ -126,6 +126,7 @@ def getCOGS(product_cost_df):
     product_cost_df['COGS'] = np.where(product_cost_df['inEffectValue'] == 'api_cost', product_cost_df['apiCost'], product_cost_df['updatedCost']) * product_cost_df['quantity']
     unit = product_cost_df['unit'].unique()[0]
     month_wise_product_cost_df = product_cost_df.groupby('monthYear').agg({'COGS': 'sum'}).reset_index()
+    month_wise_product_cost_df['COGS'] = month_wise_product_cost_df['COGS'].fillna(0).astype(float)
     month_wise_product_cost_df['COGS'] = round(month_wise_product_cost_df['COGS'], 0)
 
     cogs_finance_mapping = {}
@@ -158,7 +159,7 @@ def get_cogs_finance_mapping(product_cost):
     cogs_finance_mapping = getCOGS(product_cost_df)
     return cogs_finance_mapping, updated_product_costs
 
-def get_single_fs_values(fst_metric, last12CYMonthsArr, input_data_mapping, metrics_mapping, company_id, unit, fst_temp_values, calculated_input_data, required_calc_metrics_names, finance_statement_table, required_calc_metrics, cogs_finance_mapping,moveType):
+def get_single_fs_values(fst_metric, last12CYMonthsArr, input_data_mapping, metrics_mapping, company_id, unit, fst_temp_values, calculated_input_data, required_calc_metrics_names, finance_statement_table, required_calc_metrics, cogs_finance_mapping, tax_applicable,   taxes_finance_mapping, moveType):
     direct_formulae = get_direct_formulae()
     allData = []
     if moveType == 'Monthly':
@@ -197,11 +198,21 @@ def get_single_fs_values(fst_metric, last12CYMonthsArr, input_data_mapping, metr
                             if metrics['fsmName'] in required_calc_metrics_names:
                                 input_data_recalc(required_calc_metrics, last12CYMonthsArr, input_data_mapping, company_id, unit, calculated_input_data, date, mid_month_boolean_value)
                                 inEffectString = 'updated_cost'
+                            elif metrics['fsmName'] != 'Taxes':
+                            ## RECALCULTED VALUES WILL BE DIRECTLY CHANGED TO INPUT_DATA_MAPPING as array and object are passed by reference
+                                calculate_relation_input_data(input_data_mapping, date, fst_temp_values, finance_statement_table, metricId, calculated_input_data, mid_month_boolean_value)
+                                inEffectString = input_data_mapping[date][metricId]['inEffectValue']
+                                inEffectString = to_camel_case(inEffectString)
+                            elif metrics['fsmName'] == 'Taxes':
+                                calculate_relation_input_data(input_data_mapping, date, fst_temp_values, finance_statement_table, metricId, calculated_input_data, mid_month_boolean_value, tax_applicable, taxes_finance_mapping, metricType="Taxes")
+                                inEffectString = input_data_mapping[date][metricId]['inEffectValue']
+                                inEffectString = to_camel_case(inEffectString)
                             else:
                             ## RECALCULTED VALUES WILL BE DIRECTLY CHANGED TO INPUT_DATA_MAPPING as array and object are passed by reference
                                 calculate_relation_input_data(input_data_mapping, date, fst_temp_values, finance_statement_table, metricId, calculated_input_data, mid_month_boolean_value)
                                 inEffectString = input_data_mapping[date][metricId]['inEffectValue']
                                 inEffectString = to_camel_case(inEffectString)
+                            
                             
                             # print(input_data_mapping[date][metricId][inEffectString], inEffectString)
                             total += input_data_mapping[date][metricId][inEffectString] if metricId in input_data_mapping[date] and input_data_mapping[date][metricId][inEffectString] != None else 0
@@ -280,31 +291,44 @@ def get_single_fs_values(fst_metric, last12CYMonthsArr, input_data_mapping, metr
                 
     return allData, fst_temp_values
 
-def calculate_relation_input_data(input_data_mapping, date, fst_temp_values, finance_statement_table, metricId, calculated_input_data, mid_month_boolean_value = 0):
+def calculate_relation_input_data(input_data_mapping, date, fst_temp_values, finance_statement_table, metricId, calculated_input_data, mid_month_boolean_value = 0, tax_applicable= " ", taxes_finance_mapping={}, metricType='Default'):
     try:
         single_input_data = input_data_mapping[date][metricId]
-        relation_type = single_input_data['relationType']
-        relation_metric_id = single_input_data['relationMetricId']
-        if not relation_metric_id:
-            return
 
-        temp_value = -1
-        if relation_type == 'statement':
-            for i in finance_statement_table:
-                if relation_metric_id == i['id']:
-                    metric_value = fst_temp_values[date][i['name']]
-                    temp_value = metric_value
-        elif relation_type == 'metric':
-            input_mapping_data = input_data_mapping[date][str(relation_metric_id)]
-            temp_value = input_mapping_data[to_camel_case(input_mapping_data['inEffectValue'])]
+        if metricType == 'Taxes' and tax_applicable == 'VARIABLE':
+            if date in taxes_finance_mapping:
+                recalc_value = round(taxes_finance_mapping[date],2)
+            else:
+                recalc_value = 0 
 
+            single_input_data['updatedCost'] = recalc_value
 
-        if temp_value != -1:
-
-            if single_input_data['isPercentage']:
-                recalc_value = round(((single_input_data['percentageValue'] * temp_value ) / 100), 2)
-                single_input_data['updatedCost'] = recalc_value    
-
+            dummy = {
+                'fs_metric_id': single_input_data['metricId'],
+                'company_id': single_input_data['companyId'],
+                'updated_cost': single_input_data['updatedCost'],
+                'api_cost': single_input_data['apiCost'],
+                'unit': single_input_data['unit'],
+                'month_year': single_input_data['monthYear'],
+                'in_effect_value': single_input_data['inEffectValue'],
+                'is_percentage': single_input_data['isPercentage'],
+                'percentage_value': single_input_data['percentageValue'],
+                'relation_metric_id': single_input_data['relationMetricId'],
+                'relation_type': single_input_data['relationType'],
+                'is_mid_month': mid_month_boolean_value,
+            }
+            
+            if 'editedBy' in single_input_data and 'editedTime' in single_input_data:
+                dummy = {
+                    **dummy,
+                    'edited_by': single_input_data['editedBy'],
+                    'edited_time': single_input_data['editedTime']
+                }
+            calculated_input_data.append(dummy)   
+        
+        elif metricType == 'Taxes' and tax_applicable == 'NOT_APPLICABLE':
+            recalc_value = 0  
+            single_input_data['updatedCost'] = recalc_value    
             dummy = {
                 'fs_metric_id': single_input_data['metricId'],
                 'company_id': single_input_data['companyId'],
@@ -326,8 +350,74 @@ def calculate_relation_input_data(input_data_mapping, date, fst_temp_values, fin
                     'edited_by': single_input_data['editedBy'],
                     'edited_time': single_input_data['editedTime']
                 }
+            calculated_input_data.append(dummy)   
+        else: 
+            relation_type = single_input_data['relationType']
+            relation_metric_id = single_input_data['relationMetricId']
+            if not relation_metric_id:
+                return
 
-            calculated_input_data.append(dummy)
+            temp_value = -1
+            if relation_type == 'statement':
+                for i in finance_statement_table:
+                    if relation_metric_id == i['id']:
+                        metric_value = fst_temp_values[date][i['name']]
+                        temp_value = metric_value
+            elif relation_type == 'metric':
+                input_mapping_data = input_data_mapping[date][str(relation_metric_id)]
+                temp_value = input_mapping_data[to_camel_case(input_mapping_data['inEffectValue'])]
+
+            if temp_value != -1:
+
+                if single_input_data['isPercentage']:
+                    if metricType == 'Taxes' and tax_applicable == 'FIXED':
+                        recalc_value = round((temp_value*single_input_data['percentageValue'])/(100+single_input_data['percentageValue']),2)
+
+
+                    else:
+                         recalc_value = round(((single_input_data['percentageValue'] * temp_value ) / 100), 2)
+                    single_input_data['updatedCost'] = recalc_value    
+
+                dummy = {
+                    'fs_metric_id': single_input_data['metricId'],
+                    'company_id': single_input_data['companyId'],
+                    'updated_cost': single_input_data['updatedCost'],
+                    'api_cost': single_input_data['apiCost'],
+                    'unit': single_input_data['unit'],
+                    'month_year': single_input_data['monthYear'],
+                    'in_effect_value': single_input_data['inEffectValue'],
+                    'is_percentage': single_input_data['isPercentage'],
+                    'percentage_value': single_input_data['percentageValue'],
+                    'relation_metric_id': single_input_data['relationMetricId'],
+                    'relation_type': single_input_data['relationType'],
+                    'is_mid_month': mid_month_boolean_value,
+                }
+
+                if 'editedBy' in single_input_data and 'editedTime' in single_input_data:
+                    dummy = {
+                        **dummy,
+                        'edited_by': single_input_data['editedBy'],
+                        'edited_time': single_input_data['editedTime']
+                    }
+                calculated_input_data.append(dummy)
     except Exception as e:
         print('metricId', metricId)
         print(f'Error in calculate_relation_input_data: {e}')
+        
+def get_variable_taxes(product_cost):
+    try:
+        product_cost_df = pd.DataFrame(product_cost)
+        product_cost_df['sales'] = product_cost_df['sales'].fillna(0).astype(float) 
+        product_cost_df['taxRate'] = product_cost_df['taxRate'].fillna(0).astype(float)
+        product_cost_df['Taxes'] = (product_cost_df['sales'] * product_cost_df['taxRate']) / (100 + product_cost_df['taxRate'])
+        unit = product_cost_df['unit'].unique()[0]
+        month_wise_product_cost_df = product_cost_df.groupby('monthYear').agg({'Taxes': 'sum'}).reset_index()
+        month_wise_product_cost_df['Taxes'] = round(month_wise_product_cost_df['Taxes'], 0)
+
+        taxes_finance_mapping = {}
+        for index, row in month_wise_product_cost_df.iterrows():
+            taxes_finance_mapping[row['monthYear']] = row['Taxes']
+        return taxes_finance_mapping
+    except Exception as e:
+        print(f'Error in get_variable_taxes: {e}')
+        return {}
