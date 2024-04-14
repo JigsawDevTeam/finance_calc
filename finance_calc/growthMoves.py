@@ -91,14 +91,20 @@ def format_value(number):
 def affected_metrics(primary_dict, standard_change, keys_to_consider):
     try:
         # Filter the dictionary by the specified keys
-        filtered_dict = {k: v for k, v in primary_dict.items() if k in keys_to_consider}
-
+        filtered_data_dict = {k: v for k, v in primary_dict.items() if k in keys_to_consider}
+        
+        if standard_change > 0:
+            filtered_dict = {k: v for k, v in filtered_data_dict.items() if v > 0}
+        elif standard_change < 0:
+            filtered_dict = {k: v for k, v in filtered_data_dict.items() if v < 0}
+        else:
+            filtered_dict = {}
+            
         if len(filtered_dict) > 0:
             # Sort the filtered dictionary by the absolute values in descending order
             sorted_data = sorted(filtered_dict.items(), key=lambda item: abs(item[1]), reverse=True)
 
-            # Check if the top two elements have less than 10% difference in their absolute values
-            if len(sorted_data) > 1 and abs(abs(sorted_data[0][1]) - abs(sorted_data[1][1])) / abs(sorted_data[0][1]) < 0.10:
+            if len(sorted_data) > 1:# and abs(abs(sorted_data[0][1]) - abs(sorted_data[1][1])) / abs(sorted_data[0][1]) < 0.10:
                 result_dict = f"{sorted_data[0][0]} and {sorted_data[1][0]}"  # Keep top 2 elements based on their original values
             else:
                 result_dict = sorted_data[0][0]  # Keep only the top element based on its original value
