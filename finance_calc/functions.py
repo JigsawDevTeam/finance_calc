@@ -318,6 +318,12 @@ def calculate_relation_input_data(input_data_mapping, date, fst_temp_values, fin
                 'is_mid_month': mid_month_boolean_value,
             }
             
+            if 'isScheduled' in single_input_data:
+                dummy = {
+                    **dummy,
+                    'isScheduled': single_input_data['isScheduled'],
+                }
+            
             if 'editedBy' in single_input_data and 'editedTime' in single_input_data:
                 dummy = {
                     **dummy,
@@ -344,6 +350,12 @@ def calculate_relation_input_data(input_data_mapping, date, fst_temp_values, fin
                 'is_mid_month': mid_month_boolean_value,
             }
 
+            if 'isScheduled' in single_input_data:
+                dummy = {
+                    **dummy,
+                    'isScheduled': single_input_data['isScheduled'],
+                }
+            
             if 'editedBy' in single_input_data and 'editedTime' in single_input_data:
                 dummy = {
                     **dummy,
@@ -393,6 +405,12 @@ def calculate_relation_input_data(input_data_mapping, date, fst_temp_values, fin
                     'is_mid_month': mid_month_boolean_value,
                 }
 
+                if 'isScheduled' in single_input_data:
+                    dummy = {
+                        **dummy,
+                        'isScheduled': single_input_data['isScheduled'],
+                    }
+                
                 if 'editedBy' in single_input_data and 'editedTime' in single_input_data:
                     dummy = {
                         **dummy,

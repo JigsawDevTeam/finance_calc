@@ -142,6 +142,19 @@ def lambda_handler(event, context):
                     mid_all_calc_value, mid_fst_temp_values = get_single_fs_values(mid_fst_metric, last13CYMonthsArr, input_data_mid_mapping, mid_metrics_mapping, company_id, unit, mid_fst_temp_values, mid_calculated_input_data, mid_required_calc_metrics_names, finance_statement_table, mid_required_calc_metrics, mid_cogs_finance_mapping, tax_applicable, mid_taxes_finance_mapping, 'Mid Month')
                     mid_financial_statement_values += mid_all_calc_value    
 
+                #Divide value by to inplaces where cost is scheduled for the month and need to be calculated for midmonth
+                try:
+                    for item in mid_calculated_input_data:
+                        if item.get('isScheduled', False):
+                            try:
+                                item['updated_cost'] = item['updated_cost'] / 2
+                            except Exception as e:
+                                # If updated_cost is NaN or inf, set to 0 (or any other invalid value)
+                                item['updated_cost'] = 0 
+                                print(f'Error in dividing(item) mid month scheduled values: {e}')
+                except Exception as e:
+                    print(f'Error in dividing mid month scheduled values: {e}')   
+                         
             # print('financial_statement_values',financial_statement_values)
             # print('parsed_data',parsed_data)
             # print('mid_financial_statement_values',mid_financial_statement_values)
