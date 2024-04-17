@@ -935,26 +935,36 @@ def calculate_growth(financial_statement_values, parsed_data, mid_financial_stat
     last_month_name = formatted_date
     
     try:
-        gp_this = valuegetter(outer_this,'name','Gross Profit %','value') 
-        gp_last = valuegetter(outer_last,'name','Gross Profit %','value')
-        gp_change = getPerChange(gp_last,gp_this)
-        
-        cm1_this = valuegetter(outer_this,'name','CM1 %','value') 
-        cm1_last = valuegetter(outer_last,'name','CM1 %','value')
-        cm1_change = getPerChange(cm1_last,cm1_this)
-        
-        cm2_this = valuegetter(outer_this,'name','CM2 %','value') 
-        cm2_last = valuegetter(outer_last,'name','CM2 %','value')
-        cm2_change = getPerChange(cm2_last,cm2_this)
-        
-        ebitda_this = valuegetter(outer_this,'name','EBITDA Margin','value') 
-        ebitda_last = valuegetter(outer_last,'name','EBITDA Margin','value')
-        ebitda_change = getPerChange(ebitda_last,ebitda_this)
-        
-        nc_this = valuegetter(outer_this,'name','Net Cash Margin','value') 
-        nc_last = valuegetter(outer_last,'name','Net Cash Margin','value')
-        nc_change = getPerChange(nc_last,nc_this)
-        
+        try:
+            gp_this = valuegetter(outer_this,'name','Gross Profit %','value') 
+            gp_last = valuegetter(outer_last,'name','Gross Profit %','value')
+            gp_change = getPerChange(gp_last,gp_this)
+        except:
+            gp_change = 0
+        try:
+            cm1_this = valuegetter(outer_this,'name','CM1 %','value') 
+            cm1_last = valuegetter(outer_last,'name','CM1 %','value')
+            cm1_change = getPerChange(cm1_last,cm1_this)
+        except:
+            cm1_change = 0
+        try:
+            cm2_this = valuegetter(outer_this,'name','CM2 %','value') 
+            cm2_last = valuegetter(outer_last,'name','CM2 %','value')
+            cm2_change = getPerChange(cm2_last,cm2_this)
+        except:
+            cm2_change = 0
+        try:
+            ebitda_this = valuegetter(outer_this,'name','EBITDA Margin','value') 
+            ebitda_last = valuegetter(outer_last,'name','EBITDA Margin','value')
+            ebitda_change = getPerChange(ebitda_last,ebitda_this)
+        except:
+            ebitda_change = 0
+        try:
+            nc_this = valuegetter(outer_this,'name','Net Cash Margin','value') 
+            nc_last = valuegetter(outer_last,'name','Net Cash Margin','value')
+            nc_change = getPerChange(nc_last,nc_this)
+        except:
+            nc_change = 0
         
         primary_change_dict = {
             "Gross Profit %" : gp_change,
@@ -968,26 +978,36 @@ def calculate_growth(financial_statement_values, parsed_data, mid_financial_stat
     
     if midMonthData:
         try:
-            gp_this = valuegetter(mid_outer_this,'name','Gross Profit %','value') 
-            gp_last = valuegetter(outer_this,'name','Gross Profit %','value')
-            gp_change = getPerChange(gp_last,gp_this)
-            
-            cm1_this = valuegetter(mid_outer_this,'name','CM1 %','value') 
-            cm1_last = valuegetter(outer_this,'name','CM1 %','value')
-            cm1_change = getPerChange(cm1_last,cm1_this)
-            
-            cm2_this = valuegetter(mid_outer_this,'name','CM2 %','value') 
-            cm2_last = valuegetter(outer_this,'name','CM2 %','value')
-            cm2_change = getPerChange(cm2_last,cm2_this)
-            
-            ebitda_this = valuegetter(mid_outer_this,'name','EBITDA Margin','value') 
-            ebitda_last = valuegetter(outer_this,'name','EBITDA Margin','value')
-            ebitda_change = getPerChange(ebitda_last,ebitda_this)
-            
-            nc_this = valuegetter(mid_outer_this,'name','Net Cash Margin','value') 
-            nc_last = valuegetter(outer_this,'name','Net Cash Margin','value')
-            nc_change = getPerChange(nc_last,nc_this)
-            
+            try:
+                gp_this = valuegetter(mid_outer_this,'name','Gross Profit %','value') 
+                gp_last = valuegetter(outer_this,'name','Gross Profit %','value')
+                gp_change = getPerChange(gp_last,gp_this)
+            except:
+                gp_change = 0
+            try:
+                cm1_this = valuegetter(mid_outer_this,'name','CM1 %','value') 
+                cm1_last = valuegetter(outer_this,'name','CM1 %','value')
+                cm1_change = getPerChange(cm1_last,cm1_this)
+            except:
+                cm1_change = 0
+            try:
+                cm2_this = valuegetter(mid_outer_this,'name','CM2 %','value') 
+                cm2_last = valuegetter(outer_this,'name','CM2 %','value')
+                cm2_change = getPerChange(cm2_last,cm2_this)
+            except:
+                cm2_change = 0
+            try:
+                ebitda_this = valuegetter(mid_outer_this,'name','EBITDA Margin','value') 
+                ebitda_last = valuegetter(outer_this,'name','EBITDA Margin','value')
+                ebitda_change = getPerChange(ebitda_last,ebitda_this)
+            except:
+                ebitda_change = 0
+            try:
+                nc_this = valuegetter(mid_outer_this,'name','Net Cash Margin','value') 
+                nc_last = valuegetter(outer_this,'name','Net Cash Margin','value')
+                nc_change = getPerChange(nc_last,nc_this)
+            except:
+                nc_change = 0
             
             primary_change_mid_dict = {
                 "Gross Profit %" : gp_change,
@@ -1454,86 +1474,96 @@ def calculate_growth(financial_statement_values, parsed_data, mid_financial_stat
             primary_this = valuegetter(outer_this,'name',primary_metric,'value') 
             primary_last = valuegetter(outer_last,'name',primary_metric,'value')
             
-            sales_this = valuegetter(outer_this,'name','Net Sales','value') 
-            sales_last = valuegetter(outer_last,'name','Net Sales','value')
+            opex_this = valuegetter(outer_this,'name','Operating Expenses','value')
+            opex_last = valuegetter(outer_last,'name','Operating Expenses','value')
             
-            ebitda_change = getPerChange(primary_last, primary_this)
-            if abs(ebitda_change) >= ebitda_threshold:
-
-                result_ebitda = subset_df(financial_statement_id_mapping,inner_this,inner_last,'CM2 %','EBITDA',ebitda_change)
-                
-                if len(result_ebitda) == 1:
-                    secondary_metric = list(result_ebitda.keys())[0]
-                    secondary_this = inner_this[inner_this['fsmName'] == secondary_metric]['finalValue'].iloc[0]
-                    secondary_last = inner_last[inner_last['fsmName'] == secondary_metric]['finalValue'].iloc[0]
-      
-                    percentage_ebitda_move, summary_ebitda_move = ebitda_single_move(primary_this, primary_last, secondary_metric, secondary_this, secondary_last, sales_this, sales_last, last_month_name)
-        #             print(percentage_ebitda_move)
-
-                if len(result_ebitda) == 2: 
-                    secondary_metric_1 = list(result_ebitda.keys())[0]
-                    secondary_this_1 = inner_this[inner_this['fsmName'] == secondary_metric_1]['finalValue'].iloc[0]
-                    secondary_last_1 = inner_last[inner_last['fsmName'] == secondary_metric_1]['finalValue'].iloc[0]
-                    secondary_metric_2 = list(result_ebitda.keys())[1]
-                    secondary_this_2 = inner_this[inner_this['fsmName'] == secondary_metric_2]['finalValue'].iloc[0]
-                    secondary_last_2 = inner_last[inner_last['fsmName'] == secondary_metric_2]['finalValue'].iloc[0]
-
-                    percentage_ebitda_move, summary_ebitda_move = ebitda_double_move(primary_this, primary_last, secondary_metric_1, secondary_this_1, secondary_last_1, secondary_metric_2, secondary_this_2, secondary_last_2, sales_this, sales_last, last_month_name)
-        #             print(percentage_ebitda_move)
-
-                ebitda_move_direction = 'increase' if primary_this > primary_last else 'decrease'
-
-                if (len(result_ebitda) == 1) or (len(result_ebitda) == 2):
-                    moves['EBITDA Margin'] = insightDict(
-                                    'EBITDA Margin', 
-                                    percentage_ebitda_move, 
-                                    summary_ebitda_move,
-                                    ebitda_move_direction,
-                                    0
-                                )
-
+            if opex_this > 0 and opex_last > 0:  
             
+                sales_this = valuegetter(outer_this,'name','Net Sales','value') 
+                sales_last = valuegetter(outer_last,'name','Net Sales','value')
+
+                ebitda_change = getPerChange(primary_last, primary_this)
+                if abs(ebitda_change) >= ebitda_threshold:
+
+                    result_ebitda = subset_df(financial_statement_id_mapping,inner_this,inner_last,'CM2 %','EBITDA',ebitda_change)
+
+                    if len(result_ebitda) == 1:
+                        secondary_metric = list(result_ebitda.keys())[0]
+                        secondary_this = inner_this[inner_this['fsmName'] == secondary_metric]['finalValue'].iloc[0]
+                        secondary_last = inner_last[inner_last['fsmName'] == secondary_metric]['finalValue'].iloc[0]
+
+                        percentage_ebitda_move, summary_ebitda_move = ebitda_single_move(primary_this, primary_last, secondary_metric, secondary_this, secondary_last, sales_this, sales_last, last_month_name)
+            #             print(percentage_ebitda_move)
+
+                    if len(result_ebitda) == 2:
+                        secondary_metric_1 = list(result_ebitda.keys())[0]
+                        secondary_this_1 = inner_this[inner_this['fsmName'] == secondary_metric_1]['finalValue'].iloc[0]
+                        secondary_last_1 = inner_last[inner_last['fsmName'] == secondary_metric_1]['finalValue'].iloc[0]
+                        secondary_metric_2 = list(result_ebitda.keys())[1]
+                        secondary_this_2 = inner_this[inner_this['fsmName'] == secondary_metric_2]['finalValue'].iloc[0]
+                        secondary_last_2 = inner_last[inner_last['fsmName'] == secondary_metric_2]['finalValue'].iloc[0]
+
+                        percentage_ebitda_move, summary_ebitda_move = ebitda_double_move(primary_this, primary_last, secondary_metric_1, secondary_this_1, secondary_last_1, secondary_metric_2, secondary_this_2, secondary_last_2, sales_this, sales_last, last_month_name)
+            #             print(percentage_ebitda_move)
+
+                    ebitda_move_direction = 'increase' if primary_this > primary_last else 'decrease'
+
+                    if (len(result_ebitda) == 1) or (len(result_ebitda) == 2):
+                        moves['EBITDA Margin'] = insightDict(
+                                        'EBITDA Margin', 
+                                        percentage_ebitda_move, 
+                                        summary_ebitda_move,
+                                        ebitda_move_direction,
+                                        0
+                                    )
+
+
         if midMonthData:
             # Mid Monthly Move
             primary_metric = "EBITDA Margin"
             primary_this = valuegetter(mid_outer_this,'name',primary_metric,'value') 
             primary_last = valuegetter(outer_this,'name',primary_metric,'value')
 
-            sales_this = valuegetter(mid_outer_this,'name','Net Sales','value') 
-            sales_last = valuegetter(mid_outer_last,'name','Net Sales','value')
+            opex_this = valuegetter(mid_outer_this,'name','Operating Expenses','value') 
+            opex_last = valuegetter(mid_outer_last,'name','Operating Expenses','value')
             
-            ebitda_change = getPerChange(primary_last, primary_this)
+            if opex_this > 0 and opex_last > 0:
             
-            if abs(ebitda_change) >= ebitda_threshold:
+                sales_this = valuegetter(mid_outer_this,'name','Net Sales','value') 
+                sales_last = valuegetter(mid_outer_last,'name','Net Sales','value')
 
-                result_ebitda = subset_df(financial_statement_id_mapping,mid_inner_this,mid_inner_last,'CM2 %','EBITDA',ebitda_change)
-                if len(result_ebitda) == 1:
-                    secondary_metric = list(result_ebitda.keys())[0]
-                    secondary_this = valuegetter(mid_inner_this,'fsmName',secondary_metric,'finalValue')
-                    secondary_last = valuegetter(mid_inner_last,'fsmName',secondary_metric,'finalValue') 
+                ebitda_change = getPerChange(primary_last, primary_this)
 
-                    mid_percentage_ebitda_move, mid_summary_ebitda_move  = ebitda_single_move(primary_this, primary_last, secondary_metric, secondary_this, secondary_last, sales_this, sales_last, last_month_name, moveType='MidMonth')
+                if abs(ebitda_change) >= ebitda_threshold:
 
-                if len(result_ebitda) == 2:
-                    secondary_metric_1 = list(result_ebitda.keys())[0]
-                    secondary_this_1 = valuegetter(mid_inner_this,'fsmName',secondary_metric_1,'finalValue') 
-                    secondary_last_1 = valuegetter(mid_inner_last,'fsmName',secondary_metric_1,'finalValue')
-                    secondary_metric_2 = list(result_ebitda.keys())[1]
-                    secondary_this_2 = valuegetter(mid_inner_this,'fsmName',secondary_metric_2,'finalValue')
-                    secondary_last_2 = valuegetter(mid_inner_last,'fsmName',secondary_metric_2,'finalValue')
+                    result_ebitda = subset_df(financial_statement_id_mapping,mid_inner_this,mid_inner_last,'CM2 %','EBITDA',ebitda_change)
+                    if len(result_ebitda) == 1:
+                        secondary_metric = list(result_ebitda.keys())[0]
+                        secondary_this = valuegetter(mid_inner_this,'fsmName',secondary_metric,'finalValue')
+                        secondary_last = valuegetter(mid_inner_last,'fsmName',secondary_metric,'finalValue') 
 
-                    mid_percentage_ebitda_move, mid_summary_ebitda_move  = ebitda_double_move(primary_this, primary_last, secondary_metric_1, secondary_this_1, secondary_last_1, secondary_metric_2, secondary_this_2, secondary_last_2, sales_this, sales_last, last_month_name, moveType='MidMonth')
+                        mid_percentage_ebitda_move, mid_summary_ebitda_move  = ebitda_single_move(primary_this, primary_last, secondary_metric, secondary_this, secondary_last, sales_this, sales_last, last_month_name, moveType='MidMonth')
 
-                mid_ebitda_move_direction = 'increase' if primary_this > primary_last else 'decrease'
-                
-                if (len(result_ebitda) == 1) or (len(result_ebitda) == 2):
-                    moves['EBITDA Margin'] = insightDict(
-                                'EBITDA Margin', 
-                                mid_percentage_ebitda_move, 
-                                mid_summary_ebitda_move,
-                                mid_ebitda_move_direction,
-                                1
-                            )            
+                    if len(result_ebitda) == 2:
+                        secondary_metric_1 = list(result_ebitda.keys())[0]
+                        secondary_this_1 = valuegetter(mid_inner_this,'fsmName',secondary_metric_1,'finalValue') 
+                        secondary_last_1 = valuegetter(mid_inner_last,'fsmName',secondary_metric_1,'finalValue')
+                        secondary_metric_2 = list(result_ebitda.keys())[1]
+                        secondary_this_2 = valuegetter(mid_inner_this,'fsmName',secondary_metric_2,'finalValue')
+                        secondary_last_2 = valuegetter(mid_inner_last,'fsmName',secondary_metric_2,'finalValue')
+
+                        mid_percentage_ebitda_move, mid_summary_ebitda_move  = ebitda_double_move(primary_this, primary_last, secondary_metric_1, secondary_this_1, secondary_last_1, secondary_metric_2, secondary_this_2, secondary_last_2, sales_this, sales_last, last_month_name, moveType='MidMonth')
+
+                    mid_ebitda_move_direction = 'increase' if primary_this > primary_last else 'decrease'
+
+                    if (len(result_ebitda) == 1) or (len(result_ebitda) == 2):
+                        moves['EBITDA Margin'] = insightDict(
+                                    'EBITDA Margin', 
+                                    mid_percentage_ebitda_move, 
+                                    mid_summary_ebitda_move,
+                                    mid_ebitda_move_direction,
+                                    1
+                                )            
     except Exception as e:
         print(f'Error in EBITDA Margin Move: {e}')
         
@@ -1547,23 +1577,25 @@ def calculate_growth(financial_statement_values, parsed_data, mid_financial_stat
             
             loan_this = valuegetter(outer_this,'name','Loan Servicing','value')
             loan_last = valuegetter(outer_last,'name','Loan Servicing','value')
-
-            sales_this = valuegetter(outer_this,'name','Net Sales','value') 
-            sales_last = valuegetter(outer_last,'name','Net Sales','value')
             
-            net_cash_change = getPerChange(net_cash_last, net_cash_this)
-            if abs(net_cash_change) >= net_cash_threshold:
-                percentage_net_cash_move, summary_net_cash_move = net_cash_move(net_cash_this , net_cash_last, net_cash_change, loan_this, loan_last, sales_this , sales_last, last_month_name )
+            if loan_this > 0 and loan_last > 0: 
+            
+                sales_this = valuegetter(outer_this,'name','Net Sales','value') 
+                sales_last = valuegetter(outer_last,'name','Net Sales','value')
 
-                net_cash_move_direction = 'increase' if net_cash_this > net_cash_last else 'decrease'
+                net_cash_change = getPerChange(net_cash_last, net_cash_this)
+                if abs(net_cash_change) >= net_cash_threshold:
+                    percentage_net_cash_move, summary_net_cash_move = net_cash_move(net_cash_this , net_cash_last, net_cash_change, loan_this, loan_last, sales_this , sales_last, last_month_name )
 
-                moves['Net Cash Margin'] = insightDict(
-                                'Net Cash Margin', 
-                                percentage_net_cash_move, 
-                                summary_net_cash_move,
-                                net_cash_move_direction,
-                                0
-                            )
+                    net_cash_move_direction = 'increase' if net_cash_this > net_cash_last else 'decrease'
+
+                    moves['Net Cash Margin'] = insightDict(
+                                    'Net Cash Margin', 
+                                    percentage_net_cash_move, 
+                                    summary_net_cash_move,
+                                    net_cash_move_direction,
+                                    0
+                                )
 
             
         if midMonthData:
@@ -1575,23 +1607,25 @@ def calculate_growth(financial_statement_values, parsed_data, mid_financial_stat
             loan_this = valuegetter(mid_outer_this,'name','Loan Servicing','value') 
             loan_last = valuegetter(mid_outer_last,'name','Loan Servicing','value')
 
-            sales_this = valuegetter(mid_outer_this,'name','Net Sales','value') 
-            sales_last = valuegetter(mid_outer_last,'name','Net Sales','value')
+            if loan_this > 0 and loan_last > 0: 
             
-            net_cash_change = getPerChange(net_cash_last, net_cash_this)
-            
-            if abs(net_cash_change) >= net_cash_threshold:
-                mid_percentage_net_cash_move, mid_summary_net_cash_move  = net_cash_move(net_cash_this , net_cash_last, net_cash_change, loan_this, loan_last, sales_this , sales_last, last_month_name , moveType='MidMonth')
-                               
-                mid_net_cash_move_direction = 'increase' if net_cash_this > net_cash_last else 'decrease'
+                sales_this = valuegetter(mid_outer_this,'name','Net Sales','value') 
+                sales_last = valuegetter(mid_outer_last,'name','Net Sales','value')
 
-                moves['Net Cash Margin'] = insightDict(
-                            'Net Cash Margin', 
-                            mid_percentage_net_cash_move, 
-                            mid_summary_net_cash_move,
-                            mid_net_cash_move_direction,
-                            1
-                        )            
+                net_cash_change = getPerChange(net_cash_last, net_cash_this)
+
+                if abs(net_cash_change) >= net_cash_threshold:
+                    mid_percentage_net_cash_move, mid_summary_net_cash_move  = net_cash_move(net_cash_this , net_cash_last, net_cash_change, loan_this, loan_last, sales_this , sales_last, last_month_name , moveType='MidMonth')
+
+                    mid_net_cash_move_direction = 'increase' if net_cash_this > net_cash_last else 'decrease'
+
+                    moves['Net Cash Margin'] = insightDict(
+                                'Net Cash Margin', 
+                                mid_percentage_net_cash_move, 
+                                mid_summary_net_cash_move,
+                                mid_net_cash_move_direction,
+                                1
+                            )            
     except Exception as e:
         print(f'Error in Net Cash Margin Move: {e}')
         
