@@ -186,11 +186,11 @@ def sales_spend_move(cm2_change_pct,cm2_last,cm2_this,sales_change_pct,sales_las
     else:
         primary_effect = "reduced"  # Use 'reduced' if primary metric increased
     
-    s_s_ratio_this = spend_this / sales_this
-    s_s_ratio_last = spend_last / sales_last
+    s_s_ratio_this = (spend_this / sales_this)*100
+    s_s_ratio_last = (spend_last / sales_last)*100
     
-    s_s_ratio_this = adjust_decimal_corrected(s_s_ratio_this)
-    s_s_ratio_last = adjust_decimal_corrected(s_s_ratio_last)
+    s_s_ratio_this = format_percentage(s_s_ratio_this)
+    s_s_ratio_last = format_percentage(s_s_ratio_last)
     
     # Determine trends
     cm2_trend = "increased" if cm2_change_pct > 0 else "fell"
@@ -216,23 +216,23 @@ def sales_spend_move(cm2_change_pct,cm2_last,cm2_this,sales_change_pct,sales_las
             if sales_trend == "increased" and spend_trend == "decreased":
                 # Sales Increase & Spend Decrease
                 if s_s_ratio_this > 0:
-                    message += f"<br>This is because your Ad Spend to Net Sales ratio decreased to {s_s_ratio_this}."
+                    message += f"<br>This is because your Ad Spend to Net Sales decreased to {s_s_ratio_this}%."
             elif sales_change > spend_change and spend_trend == "increased":
                 # Sales Increase > Spend Increase
                 if s_s_ratio_this > 0:
-                    message += f"<br>This is because your Ad Spend to Net Sales ratio decreased to {s_s_ratio_this}, despite a {formatted_spend_change}% increase in Ad Spend."
+                    message += f"<br>This is because your Ad Spend to Net Sales decreased to {s_s_ratio_this}%, despite a {formatted_spend_change}% increase in Ad Spend."
             elif sales_change < spend_change and spend_trend == "decreased":
                 # Sales decrease < Spend decrease
                 if (s_s_ratio_this > 0 and s_s_ratio_last > 0) and (s_s_ratio_this != s_s_ratio_last):
-                    message += f"<br>This is because your Ad Spend to Net Sales ratio decreased to {s_s_ratio_this} from {s_s_ratio_last}{suffix}."
+                    message += f"<br>This is because your Ad Spend to Net Sales decreased to {s_s_ratio_this}% from {s_s_ratio_last}%{suffix}."
             elif sales_trend == "increased" and spend_trend == "steady":
                 # Sales Increase & Steady Spend
                 if (s_s_ratio_this > 0 and s_s_ratio_last > 0) and (s_s_ratio_this != s_s_ratio_last):
-                    message += f"<br>This is because your Ad Spend to Net Sales ratio decreased to {s_s_ratio_this} from {s_s_ratio_last}{suffix}, despite no increase in Ad Spend."
+                    message += f"<br>This is because your Ad Spend to Net Sales decreased to {s_s_ratio_this}% from {s_s_ratio_last}%{suffix}, despite no increase in Ad Spend."
             elif sales_trend == "steady" and spend_trend == "decreased":
                 # Steady Sales & Spend Decrease
                 if (s_s_ratio_this > 0 and s_s_ratio_last > 0) and (s_s_ratio_this != s_s_ratio_last):
-                    message += f"<br>This is because your Ad Spend to Net Sales ratio decreased to {s_s_ratio_this} from {s_s_ratio_last}{suffix}, despite no decrease in Net Sales."
+                    message += f"<br>This is because your Ad Spend to Net Sales decreased to {s_s_ratio_this}% from {s_s_ratio_last}%{suffix}, despite no decrease in Net Sales."
             else:
                 message = ''
                 
@@ -240,23 +240,23 @@ def sales_spend_move(cm2_change_pct,cm2_last,cm2_this,sales_change_pct,sales_las
             if sales_trend == "decreased" and spend_trend == "increased":
                 # Sales Decrease & Spend Increase
                 if s_s_ratio_this > 0:
-                    message += f"<br>This is because your Ad Spend to Net Sales ratio increased to {s_s_ratio_this}."
+                    message += f"<br>This is because your Ad Spend to Net Sales increased to {s_s_ratio_this}%."
             elif sales_change < spend_change and spend_trend == "decreased":
                 # Sales decrease > Spend decrease
                 if s_s_ratio_this > 0:
-                    message += f"<br>This is because your Ad Spend to Net Sales ratio increased to {s_s_ratio_this}, despite a {formatted_spend_change}% decrease in Ad Spend."
+                    message += f"<br>This is because your Ad Spend to Net Sales increased to {s_s_ratio_this}%, despite a {formatted_spend_change}% decrease in Ad Spend."
             elif sales_change < spend_change and spend_trend == "increased":
                 # Sales increase < Spend increase
                 if (s_s_ratio_this > 0 and s_s_ratio_last > 0) and (s_s_ratio_this != s_s_ratio_last):
-                    message += f"<br>This is because your Ad Spend to Net Sales ratio increased to {s_s_ratio_this} from {s_s_ratio_last}{suffix}."
+                    message += f"<br>This is because your Ad Spend to Net Sales increased to {s_s_ratio_this}% from {s_s_ratio_last}%{suffix}."
             elif sales_trend == "steady" and spend_trend == "increased":
                 # Sales Steady & Spend Increase
                 if (s_s_ratio_this > 0 and s_s_ratio_last > 0) and (s_s_ratio_this != s_s_ratio_last):
-                    message += f"<br>This is because your Ad Spend to Net Sales ratio increased to {s_s_ratio_this} from {s_s_ratio_last}{suffix}, despite no increase in Net Sales."
+                    message += f"<br>This is because your Ad Spend to Net Sales increased to {s_s_ratio_this}% from {s_s_ratio_last}%{suffix}, despite no increase in Net Sales."
             elif sales_trend == "decreased" and spend_trend == "steady":
                 # Sales Decrease & Steady Spend
                 if (s_s_ratio_this > 0 and s_s_ratio_last > 0) and (s_s_ratio_this != s_s_ratio_last):
-                    message += f"<br>This is because your Ad Spend to Net Sales ratio increased to {s_s_ratio_this} from {s_s_ratio_last}{suffix}, despite no decrease in Ad Spend."
+                    message += f"<br>This is because your Ad Spend to Net Sales increased to {s_s_ratio_this}% from {s_s_ratio_last}%{suffix}, despite no decrease in Ad Spend."
             else:
                 message = ''
             
@@ -676,11 +676,11 @@ def net_cash_move(net_cash_this , net_cash_last, net_cash_change, loan_this, loa
     else:
         trend = "fell"
        
-    l_s_ratio_this = loan_this / sales_this
-    l_s_ratio_last = loan_last / sales_last
+    l_s_ratio_this = (loan_this / sales_this)*100
+    l_s_ratio_last = (loan_last / sales_last)*100
     
-    l_s_ratio_this = adjust_decimal_corrected(l_s_ratio_this)
-    l_s_ratio_last = adjust_decimal_corrected(l_s_ratio_last)
+    l_s_ratio_this = format_percentage(l_s_ratio_this)
+    l_s_ratio_last = format_percentage(l_s_ratio_last)
     
     if l_s_ratio_this > l_s_ratio_last:
         secondary_change = "an increase"
@@ -691,12 +691,12 @@ def net_cash_move(net_cash_this , net_cash_last, net_cash_change, loan_this, loa
         summary = f"Net Cash Margin in {last_month_name} {trend} to <b>{format_percentage(net_cash_this)}%</b> from <b>{format_percentage(net_cash_last)}%</b>."
         netCashMove = f"Net Cash Margin in {last_month_name} {trend} to {format_percentage(net_cash_this)}% from {format_percentage(net_cash_last)}%."
         if (l_s_ratio_this > 0 and l_s_ratio_last > 0) and (l_s_ratio_this != l_s_ratio_last):      
-            netCashMove += f"<br>This is due to {secondary_change} in Loan Servicing to Net Sales ratio to {l_s_ratio_this} from {l_s_ratio_last}."
+            netCashMove += f"<br>This is due to {secondary_change} in Loan Servicing to Net Sales to {l_s_ratio_this}% from {l_s_ratio_last}%."
     else:
         summary = f"Net Cash Margin this month {trend} to <b>{format_percentage(net_cash_this)}%</b> from <b>{format_percentage(net_cash_last)}%</b> last month."
         netCashMove = f"Net Cash Margin this month {trend} to {format_percentage(net_cash_this)}% from {format_percentage(net_cash_last)}% last month."
         if (l_s_ratio_this > 0 and l_s_ratio_last > 0) and (l_s_ratio_this != l_s_ratio_last):
-            netCashMove += f"<br>This is due to {secondary_change} in Loan Servicing to Net Sales ratio to {l_s_ratio_this} from {l_s_ratio_last} at this time last month."
+            netCashMove += f"<br>This is due to {secondary_change} in Loan Servicing to Net Sales to {l_s_ratio_this}% from {l_s_ratio_last}% at this time last month."
         
     return netCashMove, summary
 
@@ -711,11 +711,11 @@ def ebitda_single_move(primary_this, primary_last, secondary_metric, secondary_t
     if moveType != 'Monthly':
         primary_change_pct = custom_round(getPerChange(primary_last, primary_this))    
         
-    s1_s_ratio_this = secondary_this / sales_this
-    s1_s_ratio_last = secondary_last / sales_last
+    s1_s_ratio_this = (secondary_this / sales_this)*100
+    s1_s_ratio_last = (secondary_last / sales_last)*100
     
-    s1_s_ratio_this = adjust_decimal_corrected(s1_s_ratio_this)
-    s1_s_ratio_last = adjust_decimal_corrected(s1_s_ratio_last)
+    s1_s_ratio_this = format_percentage(s1_s_ratio_this)
+    s1_s_ratio_last = format_percentage(s1_s_ratio_last)
     
     # Determine the direction of change for the secondary metric
     if s1_s_ratio_this > s1_s_ratio_last:
@@ -728,13 +728,13 @@ def ebitda_single_move(primary_this, primary_last, secondary_metric, secondary_t
         summary = f"EBITDA Margin in {last_month_name} {primary_change} to <b>{format_percentage(primary_this)}%</b> from <b>{format_percentage(primary_last)}%</b>"
         message = f"EBITDA Margin in {last_month_name} {primary_change} to {format_percentage(primary_this)}% from {format_percentage(primary_last)}%." 
         if (s1_s_ratio_this > 0 and s1_s_ratio_last > 0) and (s1_s_ratio_this != s1_s_ratio_last):
-            message += f"<br>This is due to {secondary_change} in {secondary_metric} to Net Sales ratio to {s1_s_ratio_this} from {s1_s_ratio_last}." 
+            message += f"<br>This is due to {secondary_change} in {secondary_metric} to Net Sales to {s1_s_ratio_this}% from {s1_s_ratio_last}%." 
 
     else:
         summary = f"EBITDA Margin this month {primary_change} to <b>{format_percentage(primary_this)}%</b> from <b>{format_percentage(primary_last)}%</b> last month"
         message = f"EBITDA Margin this month {primary_change} to {format_percentage(primary_this)}% from {format_percentage(primary_last)}% last month." 
         if (s1_s_ratio_this > 0 and s1_s_ratio_last > 0) and (s1_s_ratio_this != s1_s_ratio_last):
-            message += f"<br>This is due to {secondary_change} in {secondary_metric} to Net Sales ratio to {s1_s_ratio_this} from {s1_s_ratio_last} at this time last month." 
+            message += f"<br>This is due to {secondary_change} in {secondary_metric} to Net Sales to {s1_s_ratio_this}% from {s1_s_ratio_last}% at this time last month." 
 
     return message,summary
 
@@ -748,17 +748,17 @@ def ebitda_double_move(primary_this, primary_last, secondary_metric_1, secondary
     if moveType != 'Monthly':
         primary_change_pct = custom_round(getPerChange(primary_last, primary_this))
     
-    s1_s_ratio_this = secondary_this_1 / sales_this
-    s1_s_ratio_last = secondary_last_1 / sales_last
+    s1_s_ratio_this = ((secondary_this_1 / sales_this)*100)
+    s1_s_ratio_last = ((secondary_last_1 / sales_last)*100)
     
-    s1_s_ratio_this = adjust_decimal_corrected(s1_s_ratio_this)
-    s1_s_ratio_last = adjust_decimal_corrected(s1_s_ratio_last)
+    s1_s_ratio_this = format_percentage(s1_s_ratio_this)
+    s1_s_ratio_last = format_percentage(s1_s_ratio_last)
     
-    s2_s_ratio_this = secondary_this_2 / sales_this
-    s2_s_ratio_last = secondary_last_2 / sales_last
+    s2_s_ratio_this = ((secondary_this_2 / sales_this)*100)
+    s2_s_ratio_last = ((secondary_last_2 / sales_last)*100)
     
-    s2_s_ratio_this = adjust_decimal_corrected(s2_s_ratio_this)
-    s2_s_ratio_last = adjust_decimal_corrected(s2_s_ratio_last)
+    s2_s_ratio_this = format_percentage(s2_s_ratio_this)
+    s2_s_ratio_last = format_percentage(s2_s_ratio_last)
     
     # Determine the direction of change for the first secondary metric
     if s1_s_ratio_this > s1_s_ratio_last:
@@ -777,15 +777,15 @@ def ebitda_double_move(primary_this, primary_last, secondary_metric_1, secondary
         summary = f"EBITDA Margin in {last_month_name} {primary_change} to <b>{format_percentage(primary_this)}%</b> from <b>{format_percentage(primary_last)}%</b>"
         message = f"EBITDA Margin in {last_month_name} {primary_change} to {format_percentage(primary_this)}% from {format_percentage(primary_last)}%." 
         if (s1_s_ratio_this > 0 and s1_s_ratio_last > 0 and s2_s_ratio_this > 0 and s2_s_ratio_last > 0) and (s1_s_ratio_this != s1_s_ratio_last) and (s2_s_ratio_this != s2_s_ratio_last):
-            message += f"<br>This is due to {secondary_change_1} in {secondary_metric_1} to Net Sales ratio to {s1_s_ratio_this} from {s1_s_ratio_last} " \
-                       f"or {secondary_change_2} in {secondary_metric_2} to Net Sales ratio to {s2_s_ratio_this} from {s2_s_ratio_last}." 
+            message += f"<br>This is due to {secondary_change_1} in {secondary_metric_1} to Net Sales to {s1_s_ratio_this}% from {s1_s_ratio_last}% " \
+                       f"or {secondary_change_2} in {secondary_metric_2} to Net Sales to {s2_s_ratio_this}% from {s2_s_ratio_last}%." 
 
     else:
         summary = f"EBITDA Margin this month {primary_change} to <b>{format_percentage(primary_this)}%</b> from <b>{format_percentage(primary_last)}%</b> last month"
         message = f"EBITDA Margin this month {primary_change} to {format_percentage(primary_this)}% from {format_percentage(primary_last)}% last month." 
         if (s1_s_ratio_this > 0 and s1_s_ratio_last > 0 and s2_s_ratio_this > 0 and s2_s_ratio_last > 0) and (s1_s_ratio_this != s1_s_ratio_last) and (s2_s_ratio_this != s2_s_ratio_last):
-            message += f"<br>This is due to {secondary_change_1} in {secondary_metric_1} to Net Sales ratio to {s1_s_ratio_this} from {s1_s_ratio_last} at this time last month " \
-                       f"or {secondary_change_2} in {secondary_metric_2} to Net Sales ratio to {s2_s_ratio_this} from {s2_s_ratio_last} at this time last month." 
+            message += f"<br>This is due to {secondary_change_1} in {secondary_metric_1} to Net Sales to {s1_s_ratio_this}% from {s1_s_ratio_last}% at this time last month " \
+                       f"or {secondary_change_2} in {secondary_metric_2} to Net Sales to {s2_s_ratio_this}% from {s2_s_ratio_last}% at this time last month." 
     
     return message,summary
 
