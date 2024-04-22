@@ -671,7 +671,7 @@ def subset_df(financial_statement_id_mapping,inner_this,inner_last,metric_name1,
 def net_cash_move(net_cash_this , net_cash_last, net_cash_change, loan_this, loan_last, sales_this , sales_last, last_month_name ,moveType='Monthly'):
     netCashMove = ''
     summary = ''
-    if net_cash_change > 0:
+    if net_cash_this > net_cash_last:
         trend = "increased"
     else:
         trend = "fell"
