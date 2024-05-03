@@ -1,0 +1,53 @@
+name: Python SAM CI/CD
+
+on:
+  push:
+    branches:
+      - main # Set the branch for which to trigger the pipeline
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: "3.9" # Set to your Python version
+
+      - name: Check AWS SAM CLI version
+        run: |
+          if ! sam --version; then
+            wget https://github.com/aws/aws-sam-cli/releases/latest/download/aws-sam-cli-linux-x86_64.zip
+            unzip aws-sam-cli-linux-x86_64.zip -d sam-installation
+            sudo ./sam-installation/install
+          fi
+          sam --version
+
+      - name: Build SAM application
+        run: sam build
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ap-south-1
+
+      - name: Package SAM application
+        run: sam package --output-template-file packaged.yaml --s3-bucket ${{ secrets.AWS_S3_BUCKET }} --region ap-south-1
+
+      - name: Deploy SAM application
+        run: >
+          sam deploy
+          --template-file packaged.yaml
+          --stack-name financeCalcProd
+          --capabilities CAPABILITY_IAM
+          --region ap-south-1
+          --parameter-overrides
+          ParameterKey=ENVIRONMENT,ParameterValue=${{ secrets.BETA_ENVIRONMENT }}
+          ParameterKey=SLACKERRORTOKEN,ParameterValue=${{ secrets.SLACK_ERROR_TOKEN }}
+          --no-confirm-changeset
+          --no-fail-on-empty-changeset

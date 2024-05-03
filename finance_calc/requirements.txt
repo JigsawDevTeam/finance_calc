@@ -1,3 +1,4 @@
 requests
 pandas
-json
+numpy
+urllib3<2
