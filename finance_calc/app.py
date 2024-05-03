@@ -62,6 +62,9 @@ def lambda_handler(event, context):
         company_id = data['companyId']
         job_id = data['jobId']
         product_cost = data['productCost']
+        
+        isFirstTime = data['isFirstTime'] if data['isFirstTime'] != None else False
+        
         unit = '₹'
         
         calculated_input_data = []
@@ -171,7 +174,8 @@ def lambda_handler(event, context):
                     "inputData": calculated_input_data + mid_calculated_input_data,
                     "financeStatementValues": financial_statement_values,
                     "companyId": company_id,
-                    "jobId": job_id
+                    "jobId": job_id,
+                    "isFirstTime": isFirstTime
                 }
         
         else:
@@ -182,7 +186,8 @@ def lambda_handler(event, context):
                     "inputData": calculated_input_data,
                     "financeStatementValues": financial_statement_values,
                     "companyId": company_id,
-                    "jobId": job_id
+                    "jobId": job_id,
+                    "isFirstTime": isFirstTime
                 }
         print(body)
         # return body,'',''
