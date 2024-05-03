@@ -64,6 +64,7 @@ def lambda_handler(event, context):
         product_cost = data['productCost']
         
         isFirstTime = data['isFirstTime'] if data['isFirstTime'] != None else False
+        print('isFirstTime', isFirstTime)
         
         unit = '₹'
         
