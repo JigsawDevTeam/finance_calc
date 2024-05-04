@@ -8,7 +8,7 @@ def get_direct_formulae():
         'Gross Profit %': '(Gross Profit/Sales)*100',
         'CM1': 'Gross Profit-Shipping Cost-Packaging Cost',
         'CM1 %': '(CM1/Net Sales)*100',
-        'CM2': 'CM1-Ad Spend-Platform Commission-Additional Cost',
+        'CM2': 'CM1-Ad Spend-Platform Commission-Other Direct Cost',
         'CM2 %': '(CM2/Net Sales)*100',
         'EBITDA': 'CM2 - Operating Expenses',
         'EBITDA Margin': '(EBITDA/Net Sales)*100',
