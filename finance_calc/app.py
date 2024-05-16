@@ -121,8 +121,8 @@ def lambda_handler(event, context):
                 mid_required_calc_metrics_names = []
                 for i in metric_mapping_data:
                     if i['formula'] != '':
-                        required_calc_metrics.append(i)
-                        required_calc_metrics_names.append(i['fsmName'])
+                        mid_required_calc_metrics.append(i)
+                        mid_required_calc_metrics_names.append(i['fsmName'])
 
                 mid_metrics_mapping = get_metrics_mapping(metric_mapping_data)
 
