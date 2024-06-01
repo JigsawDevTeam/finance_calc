@@ -293,6 +293,9 @@ def get_single_fs_values(fst_metric, last12CYMonthsArr, input_data_mapping, metr
 
 def calculate_relation_input_data(input_data_mapping, date, fst_temp_values, finance_statement_table, metricId, calculated_input_data, mid_month_boolean_value = 0, tax_applicable= " ", taxes_finance_mapping={}, metricType='Default'):
     try:
+        # if metricId == "47":
+        #     print('HERE')
+        #     print(input_data_mapping[date][metricId])
         single_input_data = input_data_mapping[date][metricId]
 
         if metricType == 'Taxes' and tax_applicable == 'VARIABLE':
@@ -366,8 +369,10 @@ def calculate_relation_input_data(input_data_mapping, date, fst_temp_values, fin
         else: 
             relation_type = single_input_data['relationType']
             relation_metric_id = single_input_data['relationMetricId']
+            recalc_value = -1
             if not relation_metric_id:
-                return
+                recalc_value = single_input_data['updatedCost']
+                # return
 
             temp_value = -1
             if relation_type == 'statement':
@@ -379,8 +384,7 @@ def calculate_relation_input_data(input_data_mapping, date, fst_temp_values, fin
                 input_mapping_data = input_data_mapping[date][str(relation_metric_id)]
                 temp_value = input_mapping_data[to_camel_case(input_mapping_data['inEffectValue'])]
 
-            if temp_value != -1:
-
+            if temp_value != -1 or recalc_value != -1:
                 if single_input_data['isPercentage']:
                     if metricType == 'Taxes' and tax_applicable == 'FIXED':
                         recalc_value = round((temp_value*single_input_data['percentageValue'])/(100+single_input_data['percentageValue']),2)
